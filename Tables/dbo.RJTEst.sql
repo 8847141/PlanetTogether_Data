@@ -1,0 +1,9 @@
+CREATE TABLE [dbo].[RJTEst]
+(
+[a] [float] NOT NULL,
+[b] [float] NOT NULL,
+[c] [int] NULL
+) ON [PRIMARY]
+GO
+ALTER TABLE [dbo].[RJTEst] ADD CONSTRAINT [PK__RJTEst__D86D1816BE9882BC] PRIMARY KEY CLUSTERED  ([a], [b]) ON [PRIMARY]
+GO
