@@ -6,7 +6,7 @@ CREATE TABLE [Setup].[MachineGroupAttributes]
 [ValueTypeID] [int] NOT NULL,
 [CreatedBy] [nvarchar] (50) COLLATE SQL_Latin1_General_CP1_CI_AS NULL CONSTRAINT [DF_MachineAttributes_CreatedBy] DEFAULT (suser_sname()),
 [DateCreated] [datetime] NULL CONSTRAINT [DF_MachineAttributes_DateCreated] DEFAULT (getdate()),
-[ApsData] [bit] NULL
+[ApsData] [bit] NULL CONSTRAINT [DF_MachineGroupAttributes_ApsData] DEFAULT ((0))
 ) ON [PRIMARY]
 GO
 ALTER TABLE [Setup].[MachineGroupAttributes] ADD CONSTRAINT [CHK_logic] CHECK (([LogicType]='Consecutive' OR [LogicType]='Concurrent'))

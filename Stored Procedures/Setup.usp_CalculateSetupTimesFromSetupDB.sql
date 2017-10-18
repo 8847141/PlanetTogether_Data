@@ -51,11 +51,20 @@ AS
 
 	--Insert From To setup values from Setup DB
 	INSERT INTO [Setup].AttributeSetupTime ([Setup],[MachineGroupID],[MachineName],AttributeNameID,[SetupAttributeValue],[SetupTime])
-	SELECT distinct SetupNumber, G.MachineGroupID,PlanetTogetherMachineNumber, G.AttributeNameID, 
+	SELECT distinct SetupNumber, G.MachineGroupID,PlanetTogetherMachineNumber, G.AttributeNameID,
 	CASE WHEN G.AttributeNameID = 34 AND COALESCE(AttributeValue,'0') <> '0' THEN '1'
 		 ELSE COALESCE(AttributeValue,'0') END , NULL
 	  FROM [Setup].[vMachineSetupAttributes] G
-	where G.ValueTypeID = 5 --AND AttributeNameID = 1
+	where G.ValueTypeID = 5 AND  G.AttributeNameID <> 34
+
+	--Insert From to Setup for glue.  
+	INSERT INTO [Setup].AttributeSetupTime ([Setup],[MachineGroupID],[MachineName],AttributeNameID,[SetupAttributeValue],[SetupTime])
+	SELECT distinct SetupNumber, G.MachineGroupID,PlanetTogetherMachineNumber, G.AttributeNameID,
+	CASE WHEN G.AttributeNameID = 34 AND COALESCE(AttributeValue,'0') <> '0' THEN '1'
+		 ELSE COALESCE(AttributeValue,'0') END , NULL
+	  FROM [Setup].[vMachineSetupAttributesNulls] G
+	where G.ValueTypeID = 5 AND  G.AttributeNameID = 34
+
 
 
 	--Insert buffering setup as the SetupAttributeValue

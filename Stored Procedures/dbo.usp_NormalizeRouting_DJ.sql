@@ -102,7 +102,7 @@ BEGIN
 			SET @NextSeq = 0;
 		END
 	--If the criteria is passed from the last if statment and there is no proceeding true operation code then execute
-	IF  @NextSeq = 1 OR (@FirstTrueOp = 1 and @Lastsend_to_aps = 'D' AND @send_to_aps ='Y')
+	IF  @NextSeq = 1 OR (@FirstTrueOp = 1 and @Lastsend_to_aps = 'D' AND @send_to_aps ='Y') OR (@FirstTrueOp = 0 and @Lastsend_to_aps = 'Y' AND @send_to_aps ='D') 
 		BEGIN
 			SET @SeqLayer = @SeqLayer + 10
 		END

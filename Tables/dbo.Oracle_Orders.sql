@@ -17,7 +17,7 @@ CREATE TABLE [dbo].[Oracle_Orders]
 [request_date] [datetime] NULL,
 [promise_date] [datetime] NULL,
 [need_by_date] [datetime] NULL,
-[schedule_approved] [varchar] (1) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+[schedule_approved] [varchar] (30) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
 [usac_no_of_cuts] [float] NULL,
 [usac_cut_length] [float] NULL,
 [bom_route_alt] [varchar] (50) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,

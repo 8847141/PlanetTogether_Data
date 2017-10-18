@@ -101,15 +101,22 @@ BEGIN
 
 
 	--Calculate EFL gain for SS RW 
-	INSERT INTO [Setup].AttributeSetupTimeItem (Item_Number,[Setup],[MachineGroupID],[MachineName],AttributeNameID,[SetupAttributeValue],[SetupTime])
-	SELECT  DISTINCT a.itemnumber,[Setup],MG.[MachineGroupID],M.[MachineName],MG.AttributeNameID,COALESCE(CAST(a.TargetValue AS FLOAT),0),TimeValue--, a.SpecificationElement
+	;WITH cteEFL
+	AS(
+	SELECT  DISTINCT a.itemnumber,[Setup],MG.[MachineGroupID],M.[MachineName],MG.AttributeNameID,COALESCE(CAST(a.TargetValue AS FLOAT),0) SetupAttributeValue,TimeValue--, a.SpecificationElement
+	,ROW_NUMBER() OVER (PARTITION BY a.itemnumber,[Setup],MG.[MachineGroupID],M.[MachineName],MG.AttributeNameID ORDER BY  a.itemnumber) RowNumber
 	FROM setup.MachineGroupAttributes MG INNER JOIN setup.MachineNames M ON M.MachineGroupID = MG.MachineGroupID
 		INNER JOIN setup.vMachineCapability T ON T.MachineName = M.MachineName
 		INNER JOIN dbo.Oracle_Routes G ON G.true_operation_code = T.Setup
 		INNER JOIN [NAASPB-PRD04\SQL2014].Premise.dbo.AFLPRD_INVSysItemSpec_CAB A ON a.itemnumber = g.item_number 
 		INNER JOIN setup.ApsSetupAttributeReference R ON R.AttributeNameID = MG.AttributeNameID AND A.SpecificationElement = r.OracleAttribute
 		INNER JOIN setup.vAttributeMatrixUnion MU ON MU.AttributeNameID = MG.AttributeNameID AND MU.MachineGroupID = MG.MachineGroupID and mu.MachineName = t.MachineName AND MG.ValueTypeID = MU.ValueTypeID
-	WHERE mg.MachineGroupID = 11 and mg.ValueTypeID = 2
+	WHERE mg.MachineGroupID = 11 and mg.ValueTypeID = 2 
+	)
+	INSERT INTO [Setup].AttributeSetupTimeItem (Item_Number,[Setup],[MachineGroupID],[MachineName],AttributeNameID,[SetupAttributeValue],[SetupTime])
+	SELECT itemnumber,[Setup],[MachineGroupID],[MachineName],AttributeNameID,SetupAttributeValue,TimeValue
+	FROM cteEFL
+	WHERE RowNumber = 1
 
 	--Insert all items for setups
 	INSERT INTO [Setup].AttributeSetupTimeItem (Item_Number,[Setup],[MachineGroupID],[MachineName],AttributeNameID,[SetupAttributeValue],[SetupTime])

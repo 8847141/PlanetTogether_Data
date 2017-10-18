@@ -39,8 +39,8 @@ BEGIN
 	GROUP BY FinishedGood
 	order by FinishedGood
 
-	INSERT INTO Setup.ItemAttributes(ItemNumber,FiberCount)
-	SELECT DISTINCT K.item_number, 0
+	INSERT INTO Setup.ItemAttributes(ItemNumber,FiberCount,FiberMeters)
+	SELECT DISTINCT K.item_number, 0,0
 	FROM dbo.Oracle_Items K INNER JOIN dbo.Oracle_BOMs P ON K.item_number = P.item_number
 	LEFT JOIN setup.ItemAttributes G ON K.item_number = G.ItemNumber
 	WHERE G.ItemNumber  IS NULL AND K.make_buy = 'MAKE'

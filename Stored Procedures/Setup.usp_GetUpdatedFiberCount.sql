@@ -55,14 +55,14 @@ BEGIN
 		INNER JOIN #BomExplode P ON P.comp_item = G.item_number
 		where  ((part in ('Fiber','Ribbon') AND position = 4)  OR (part ='Bare Ribbon' and position = 5)) and make_buy = 'buy' and p.alternate_designator = 'primary'
 	)
-	INSERT INTO Setup.ItemAttributes(ItemNumber,FiberCount)
-	SELECT FinishedGood,sum(cast(ExtendedQuantityPer as int)) as FiberCount
+	INSERT INTO Setup.ItemAttributes(ItemNumber,FiberCount, FiberMeters)
+	SELECT FinishedGood,sum(cast(ExtendedQuantityPer as int)) as FiberCount,sum(ExtendedQuantityPer)
 	FROM cteFiber
 	GROUP BY FinishedGood
 
 
-	INSERT INTO Setup.ItemAttributes(ItemNumber,FiberCount)
-	SELECT DISTINCT K.assembly_item, 0
+	INSERT INTO Setup.ItemAttributes(ItemNumber,FiberCount,FiberMeters)
+	SELECT DISTINCT K.assembly_item, 0,0
 	FROM #OrderItems K INNER JOIN dbo.Oracle_BOMs P ON K.assembly_item = P.item_number
 	LEFT JOIN setup.ItemAttributes G ON K.assembly_item = G.ItemNumber
 	WHERE G.ItemNumber  IS NULL 

@@ -72,7 +72,7 @@ BEGIN
     SET @MyCursor = CURSOR FOR
          select item_number, operation_seq_num, operation_code,alternate_routing_designator,pass_to_aps
 		 FROM  Oracle_Routes
-		 WHERE pass_to_aps <> 'N' --and item_number like 'O-SS-%'
+		 WHERE pass_to_aps <> 'N' --and item_number in ('rd2014-0012','PS10262-10','O-SS-1273-02','A-BT-1130-12')
 		 ORDER BY item_number,alternate_routing_designator,operation_seq_num
 		
  
@@ -105,7 +105,7 @@ BEGIN
 			SET @NextSeq = 0;
 		END
 	--If the criteria is passed from the last if statment and there is no proceeding true operation code then execute
-	IF  @NextSeq = 1 or (@FirstTrueOp = 1 and @Lastpass_to_aps = 'D' AND @pass_to_aps ='Y')
+	IF  @NextSeq = 1 or (@FirstTrueOp = 1 and @Lastpass_to_aps = 'D' AND @pass_to_aps ='Y') OR (@FirstTrueOp = 0 and @Lastpass_to_aps = 'Y' AND @pass_to_aps ='D') 
 		BEGIN
 			SET @SeqLayer = @SeqLayer + 10
 		END
@@ -153,7 +153,7 @@ IF OBJECT_ID(N'tempdb..#NormalizedRouting', N'U') IS NOT NULL
 DROP TABLE #NormalizedRouting
 ;
 SELECT *, FIRST_VALUE(operation_code) OVER (PARTITION BY alternate_routing_designator,item_number,seqLayer ORDER BY item_number,alternate_routing_designator,SeqLayer,DummyFlag,operation_seq_num) TrueOperation
-INTO #NormalizedRouting
+--INTO #NormalizedRouting
 FROM #OrderHold
 --WHERE item_number in( 'PG08030-00','a-bt-1014-01','O-SS-0370-00')-- AND pass_to_aps <> 'n'
 ORDER BY item_number,alternate_routing_designator,operation_seq_num
