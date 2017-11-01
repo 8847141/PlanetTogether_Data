@@ -153,7 +153,7 @@ IF OBJECT_ID(N'tempdb..#NormalizedRouting', N'U') IS NOT NULL
 DROP TABLE #NormalizedRouting
 ;
 SELECT *, FIRST_VALUE(operation_code) OVER (PARTITION BY alternate_routing_designator,item_number,seqLayer ORDER BY item_number,alternate_routing_designator,SeqLayer,DummyFlag,operation_seq_num) TrueOperation
---INTO #NormalizedRouting
+INTO #NormalizedRouting
 FROM #OrderHold
 --WHERE item_number in( 'PG08030-00','a-bt-1014-01','O-SS-0370-00')-- AND pass_to_aps <> 'n'
 ORDER BY item_number,alternate_routing_designator,operation_seq_num

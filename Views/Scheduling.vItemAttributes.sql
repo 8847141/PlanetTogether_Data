@@ -3,10 +3,12 @@ GO
 SET ANSI_NULLS ON
 GO
 
+
 CREATE VIEW [Scheduling].[vItemAttributes]
 AS
-SELECT        ItemNumber, CableColor, Gel, NominalOD, FiberCount, FiberMeters,RevisedBy, DateRevised, CreatedBy, DateCreated
+SELECT        ItemNumber, CableColor, Gel, NominalOD, FiberCount, FiberMeters,RevisedBy, DateRevised, CreatedBy, DateCreated,ContainsFiberIdBinders
 FROM            Setup.ItemAttributes
+
 
 GO
 EXEC sp_addextendedproperty N'MS_DiagramPane1', N'[0E232FF0-B466-11cf-A24F-00AA00A3EFFF, 1.00]

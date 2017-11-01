@@ -3,6 +3,8 @@ GO
 SET ANSI_NULLS ON
 GO
 
+
+
 /*Interface view of needed information from the Recipe Management Syste / PSS DB*/
 CREATE VIEW [Setup].[vInterfaceSetupAttributes]
 AS
@@ -17,7 +19,10 @@ FROM            Setup.tblAttributes INNER JOIN
                          Setup.tblSetup ON Setup.tblSetupAttributes.SetupID = Setup.tblSetup.SetupID AND Setup.tblSetupAttributes.MachineID = Setup.tblSetup.MachineID INNER JOIN
                          Setup.tblProcessMachines ON Setup.tblSetup.MachineID = Setup.tblProcessMachines.MachineID AND 
                          Setup.tblSetup.ProcessID = Setup.tblProcessMachines.ProcessID
+						 --INNER JOIN Scheduling.MachineCapabilityScheduler I ON I.MachineName = PlanetTogetherMachineNumber AND I.SETUP = SetupNumber
 WHERE        (Setup.tblAttributes.AttrIneffectiveDate >= GETDATE()) AND (Setup.tblSetup.IneffectiveDate >= GETDATE()) AND (Setup.tblSetupAttributes.IneffectiveDate >= GETDATE()) 
-                         AND (Setup.tblProcessMachines.Active <> 0)
+                         AND (Setup.tblProcessMachines.Active <> 0) --AND I.ActiveScheduling = 1
+
+
 
 GO

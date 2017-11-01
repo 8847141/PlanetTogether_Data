@@ -7,6 +7,7 @@ GO
 
 
 
+
 -- =============================================
 -- Author:      Bryan Eddy
 -- Create date: 8/14/2017
@@ -14,7 +15,7 @@ GO
 -- =============================================
 
 CREATE PROCEDURE [Setup].[usp_CalculateSetupTimesFromOracle]
-as
+AS
 
 	SET NOCOUNT ON;
 BEGIN
@@ -83,7 +84,7 @@ BEGIN
 	--Calculate aramid setup time
 	;WITH cteAramid
 	as(
-		SELECT DISTINCT K.item_number,[Setup],MG.[MachineGroupID],M.[MachineName],MG.AttributeNameID,CAST(count_per_uom AS INT) SetupAttributeValue,TimeValue * cast(count_per_uom as int) + COALESCE(Adder,0) as SetupTime--, MG.ValueTypeID
+		SELECT K.item_number,[Setup],MG.[MachineGroupID],M.[MachineName],MG.AttributeNameID,CAST(count_per_uom AS INT) SetupAttributeValue,TimeValue * cast(count_per_uom as int) + COALESCE(Adder,0) as SetupTime--, MG.ValueTypeID
 		FROM setup.MachineGroupAttributes MG INNER JOIN setup.MachineNames M ON M.MachineGroupID = MG.MachineGroupID
 		INNER JOIN setup.vMachineCapability T ON T.MachineName = M.MachineName
 		INNER JOIN dbo.Oracle_Routes G ON G.true_operation_code = T.Setup
@@ -110,8 +111,8 @@ BEGIN
 		INNER JOIN dbo.Oracle_Routes G ON G.true_operation_code = T.Setup
 		INNER JOIN [NAASPB-PRD04\SQL2014].Premise.dbo.AFLPRD_INVSysItemSpec_CAB A ON a.itemnumber = g.item_number 
 		INNER JOIN setup.ApsSetupAttributeReference R ON R.AttributeNameID = MG.AttributeNameID AND A.SpecificationElement = r.OracleAttribute
-		INNER JOIN setup.vAttributeMatrixUnion MU ON MU.AttributeNameID = MG.AttributeNameID AND MU.MachineGroupID = MG.MachineGroupID and mu.MachineName = t.MachineName AND MG.ValueTypeID = MU.ValueTypeID
-	WHERE mg.MachineGroupID = 11 and mg.ValueTypeID = 2 
+		INNER JOIN setup.vAttributeMatrixUnion MU ON MU.AttributeNameID = MG.AttributeNameID AND MU.MachineGroupID = MG.MachineGroupID AND mu.MachineName = t.MachineName AND MG.ValueTypeID = MU.ValueTypeID
+	WHERE mg.MachineGroupID = 11 AND mg.ValueTypeID = 2 
 	)
 	INSERT INTO [Setup].AttributeSetupTimeItem (Item_Number,[Setup],[MachineGroupID],[MachineName],AttributeNameID,[SetupAttributeValue],[SetupTime])
 	SELECT itemnumber,[Setup],[MachineGroupID],[MachineName],AttributeNameID,SetupAttributeValue,TimeValue
@@ -139,7 +140,7 @@ BEGIN
 	INNER JOIN Setup.DepartmentIndicator P ON p.department_code = g.department_code
 	INNER JOIN Setup.AttributeMatrixVariableValue U ON U.AttributeValue = K.FiberCount AND P.MachineName = U.MachineName
 	INNER JOIN Setup.vMachineAttributes Y ON Y.MachineName = P.MachineName AND Y.AttributeNameID = U.AttributeNameID 
-	WHERE ValueTypeID = 7 and pass_to_aps not in ('d','N') 
+	WHERE ValueTypeID = 7 AND pass_to_aps NOT IN ('d','N') 
 
 	--Insert fibercount based setup time based on the fiber count
 	INSERT INTO [Setup].AttributeSetupTimeItem (Item_Number,[Setup],[MachineGroupID],[MachineName],AttributeNameID,[SetupAttributeValue],[SetupTime])
@@ -148,10 +149,11 @@ BEGIN
 	INNER JOIN Setup.DepartmentIndicator P ON p.department_code = g.department_code
 	INNER JOIN Setup.AttributeMatrixFixedValue U ON P.MachineName = U.MachineName
 	INNER JOIN Setup.vMachineAttributes Y ON Y.MachineName = P.MachineName AND Y.AttributeNameID = U.AttributeNameID 
-	WHERE ValueTypeID = 3 and pass_to_aps not in ('d','N') 
+	WHERE ValueTypeID = 3 AND pass_to_aps NOT IN ('d','N') 
 
 
 END
+
 
 
 
