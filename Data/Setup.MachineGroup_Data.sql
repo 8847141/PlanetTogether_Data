@@ -1,0 +1,16 @@
+SET IDENTITY_INSERT [Setup].[MachineGroup] ON
+INSERT INTO [Setup].[MachineGroup] ([MachineGroupID], [MachineGroupName], [CreatedBy], [DateCreated]) VALUES (1, N'Aramid', N'NAA\eddybc', '2017-07-31 08:52:42.050')
+INSERT INTO [Setup].[MachineGroup] ([MachineGroupID], [MachineGroupName], [CreatedBy], [DateCreated]) VALUES (2, N'Buffering', N'NAA\eddybc', '2017-07-31 08:52:42.050')
+INSERT INTO [Setup].[MachineGroup] ([MachineGroupID], [MachineGroupName], [CreatedBy], [DateCreated]) VALUES (3, N'CPipe', N'NAA\eddybc', '2017-07-31 08:52:42.050')
+INSERT INTO [Setup].[MachineGroup] ([MachineGroupID], [MachineGroupName], [CreatedBy], [DateCreated]) VALUES (4, N'FiberStrand', N'NAA\eddybc', '2017-07-31 08:52:42.050')
+INSERT INTO [Setup].[MachineGroup] ([MachineGroupID], [MachineGroupName], [CreatedBy], [DateCreated]) VALUES (5, N'OPGWCabler', N'NAA\eddybc', '2017-07-31 08:52:42.050')
+INSERT INTO [Setup].[MachineGroup] ([MachineGroupID], [MachineGroupName], [CreatedBy], [DateCreated]) VALUES (6, N'Other', N'NAA\eddybc', '2017-07-31 08:52:42.050')
+INSERT INTO [Setup].[MachineGroup] ([MachineGroupID], [MachineGroupName], [CreatedBy], [DateCreated]) VALUES (7, N'QC', N'NAA\eddybc', '2017-07-31 08:52:42.050')
+INSERT INTO [Setup].[MachineGroup] ([MachineGroupID], [MachineGroupName], [CreatedBy], [DateCreated]) VALUES (8, N'Sheathing', N'NAA\eddybc', '2017-07-31 08:52:42.050')
+INSERT INTO [Setup].[MachineGroup] ([MachineGroupID], [MachineGroupName], [CreatedBy], [DateCreated]) VALUES (9, N'SPipe', N'NAA\eddybc', '2017-07-31 08:52:42.050')
+INSERT INTO [Setup].[MachineGroup] ([MachineGroupID], [MachineGroupName], [CreatedBy], [DateCreated]) VALUES (10, N'SSPipe', N'NAA\eddybc', '2017-07-31 08:52:42.050')
+INSERT INTO [Setup].[MachineGroup] ([MachineGroupID], [MachineGroupName], [CreatedBy], [DateCreated]) VALUES (11, N'SSTRewind', N'NAA\eddybc', '2017-07-31 08:52:42.050')
+INSERT INTO [Setup].[MachineGroup] ([MachineGroupID], [MachineGroupName], [CreatedBy], [DateCreated]) VALUES (12, N'SSTube', N'NAA\eddybc', '2017-07-31 08:52:42.050')
+INSERT INTO [Setup].[MachineGroup] ([MachineGroupID], [MachineGroupName], [CreatedBy], [DateCreated]) VALUES (13, N'SZCable', N'NAA\eddybc', '2017-07-31 08:52:42.050')
+INSERT INTO [Setup].[MachineGroup] ([MachineGroupID], [MachineGroupName], [CreatedBy], [DateCreated]) VALUES (14, N'WireStrand', N'NAA\eddybc', '2017-07-31 08:52:42.050')
+SET IDENTITY_INSERT [Setup].[MachineGroup] OFF

@@ -48,3 +48,5 @@ END
 GO
 ALTER TABLE [Setup].[ItemAttributes] ADD CONSTRAINT [PK__ItemAttr__C28ACDB61FFC0AE3] PRIMARY KEY CLUSTERED  ([ItemNumber]) ON [PRIMARY]
 GO
+CREATE NONCLUSTERED INDEX [ItemAttributes_XI] ON [Setup].[ItemAttributes] ([FiberCount]) INCLUDE ([ItemNumber]) ON [PRIMARY]
+GO

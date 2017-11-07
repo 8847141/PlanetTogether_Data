@@ -25,6 +25,10 @@ CREATE TABLE [dbo].[Oracle_BOMs]
 GO
 ALTER TABLE [dbo].[Oracle_BOMs] ADD CONSTRAINT [PK_Oracle_BOMs] PRIMARY KEY CLUSTERED  ([ORG_ITEM_ID]) ON [PRIMARY]
 GO
+CREATE NONCLUSTERED INDEX [<Name of Missing Index, sysname,>] ON [dbo].[Oracle_BOMs] ([comp_item]) INCLUDE ([alternate_bom_designator], [item_number], [layer_id], [opseq], [unit_id]) ON [PRIMARY]
+GO
+CREATE NONCLUSTERED INDEX [IIX_Oracle_BOMs] ON [dbo].[Oracle_BOMs] ([comp_item]) INCLUDE ([alternate_bom_designator], [item_number], [layer_id], [opseq], [unit_id]) ON [PRIMARY]
+GO
 CREATE NONCLUSTERED INDEX [IX_Oracle_BOMs_1] ON [dbo].[Oracle_BOMs] ([comp_item], [item_number], [inventory_item_status_code], [opseq]) ON [PRIMARY]
 GO
 CREATE NONCLUSTERED INDEX [IX_Oracle_BOMs] ON [dbo].[Oracle_BOMs] ([item_number], [opseq], [inventory_item_status_code], [comp_item]) ON [PRIMARY]

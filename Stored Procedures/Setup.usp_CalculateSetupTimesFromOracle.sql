@@ -8,6 +8,8 @@ GO
 
 
 
+
+
 -- =============================================
 -- Author:      Bryan Eddy
 -- Create date: 8/14/2017
@@ -44,6 +46,11 @@ BEGIN
 	SELECT DISTINCT *
 	INTO #TEMP
 	FROM cteDup
+
+	--Create index on #Temp table to speed up insert statements
+	CREATE NONCLUSTERED INDEX [<Name of Missing Index, sysname,>]
+	ON [dbo].#temp ([attribute_name])
+	INCLUDE ([item_number],[true_operation_code],[MachineGroupID],[MachineName],[AttributeNameID],[comp_item],[attribute_value],[ValueTypeID])
 
 	--SELECT DISTINCT true_operation_code, attribute_name
 	--FROM #TEMP
@@ -133,7 +140,7 @@ BEGIN
 	INNER JOIN Setup.vMachineAttributes Y ON Y.MachineName = P.MachineName AND Y.AttributeNameID = U.AttributeNameID 
 	WHERE ValueTypeID = 4
 
-	--Insert fibercount based setup time based on the fiber count
+	--Insert fibercount based setup time based on the fiber count Value Type 7 (fixed value chosen that is dependent on the fiber count) for QC operations
 	INSERT INTO [Setup].AttributeSetupTimeItem (Item_Number,[Setup],[MachineGroupID],[MachineName],AttributeNameID,[SetupAttributeValue],[SetupTime])
 	SELECT DISTINCT Item_Number,operation_code,[MachineGroupID],p.[MachineName],u.AttributeNameID,FiberCount,TimeValue
 	FROM Setup.ItemAttributes K INNER JOIN dbo.Oracle_Routes G ON G.item_number = K.ItemNumber 
@@ -142,7 +149,7 @@ BEGIN
 	INNER JOIN Setup.vMachineAttributes Y ON Y.MachineName = P.MachineName AND Y.AttributeNameID = U.AttributeNameID 
 	WHERE ValueTypeID = 7 AND pass_to_aps NOT IN ('d','N') 
 
-	--Insert fibercount based setup time based on the fiber count
+	--Insert fibercount based setup time based on the fiber count Value Type 3 (multiply by number of fibers) for QC operations
 	INSERT INTO [Setup].AttributeSetupTimeItem (Item_Number,[Setup],[MachineGroupID],[MachineName],AttributeNameID,[SetupAttributeValue],[SetupTime])
 	SELECT DISTINCT Item_Number,operation_code,[MachineGroupID],p.[MachineName],u.AttributeNameID,FiberCount,TimeValue*FiberCount
 	FROM Setup.ItemAttributes K INNER JOIN dbo.Oracle_Routes G ON G.item_number = K.ItemNumber 
@@ -151,8 +158,22 @@ BEGIN
 	INNER JOIN Setup.vMachineAttributes Y ON Y.MachineName = P.MachineName AND Y.AttributeNameID = U.AttributeNameID 
 	WHERE ValueTypeID = 3 AND pass_to_aps NOT IN ('d','N') 
 
+	--Insert if buffering item is printed based on the %-[wb]/s% indicator in the item description.
+	--This is for ACS buffering items only
+	INSERT INTO [Setup].AttributeSetupTimeItem (Item_Number,[Setup],[MachineGroupID],[MachineName],AttributeNameID,[SetupAttributeValue],[SetupTime])
+	SELECT DISTINCT G.item_number,I.Setup,[MachineGroupID],I.[MachineName],u.AttributeNameID,(CASE WHEN G.item_description LIKE '%-[WB]/S%' THEN '1' ELSE '0' END), NULL--, K.product_class
+	FROM dbo.Oracle_Items K INNER JOIN dbo.Oracle_Routes G ON G.item_number = K.item_number
+	INNER JOIN SETUP.vMachineCapability I ON I.SETUP = G.true_operation_code
+	INNER JOIN Setup.AttributeMatrixFromTo U ON I.MachineName = U.MachineName
+	INNER JOIN Setup.vMachineAttributes Y ON Y.MachineName = I.MachineName AND Y.AttributeNameID = U.AttributeNameID 
+	WHERE ValueTypeID = 5 AND U.AttributeNameID = 37 AND k.product_class  NOT LIKE '%Premise%'
+
+
+
 
 END
+
+
 
 
 

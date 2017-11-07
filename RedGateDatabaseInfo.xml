@@ -57,6 +57,22 @@
     <DataWriteAllFilesInOneDirectory>True</DataWriteAllFilesInOneDirectory>
   </WriteToFileOptions>
   <DataFileSet>
-    <Count>0</Count>
+    <Count>16</Count>
+    <DataFile>Scheduling.OperationRunType_Data.sql</DataFile>
+    <DataFile>Setup.ApsSetupAttributes_Data.sql</DataFile>
+    <DataFile>Setup.ApsSetupAttributeSource_Data.sql</DataFile>
+    <DataFile>Setup.ApsSetupAttributeValueType_Data.sql</DataFile>
+    <DataFile>Setup.MachineCapacityType_Data.sql</DataFile>
+    <DataFile>Setup.MachineGroup_Data.sql</DataFile>
+    <DataFile>Setup.Plant_Data.sql</DataFile>
+    <DataFile>Setup.ApsSetupAttributeReference_Data.sql</DataFile>
+    <DataFile>Setup.MachineGroupAttributes_Data.sql</DataFile>
+    <DataFile>Setup.MachineNames_Data.sql</DataFile>
+    <DataFile>Scheduling.ConstraintResource_Data.sql</DataFile>
+    <DataFile>Scheduling.DefinedOperationDuration_Data.sql</DataFile>
+    <DataFile>Setup.AttributeMatrixFixedValue_Data.sql</DataFile>
+    <DataFile>Setup.AttributeMatrixFromTo_Data.sql</DataFile>
+    <DataFile>Setup.AttributeMatrixVariableValue_Data.sql</DataFile>
+    <DataFile>Setup.DepartmentIndicator_Data.sql</DataFile>
   </DataFileSet>
 </DatabaseInformation>

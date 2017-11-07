@@ -3,6 +3,7 @@ GO
 SET ANSI_NULLS ON
 GO
 
+
 -- =============================================
 -- Author:		Bryan Eddy
 -- Create date: 10/6/2017
@@ -26,8 +27,10 @@ BEGIN
 
 	EXEC Scheduling.usp_GetNewSubinventory
 
-	EXEC Scheduling.MachineCapabilitySchedulerUpdate
+	EXEC Scheduling.usp_MachineCapabilitySchedulerUpdate
 
+	EXEC Scheduling.usp_EmailSchedulerMachineCapabilityIssue
 END
+
 
 GO
