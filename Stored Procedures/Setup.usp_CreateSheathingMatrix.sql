@@ -7,27 +7,29 @@ GO
 
 
 
+
 -- =============================================
 -- Author:      Bryan Eddy
 -- Create date: 7/31/2017
 -- Description: Create all combinations for sheathing compound To From logic
 -- =============================================
-CREATE procedure [Setup].[usp_CreateSheathingMatrix]
-as
+CREATE PROCEDURE [Setup].[usp_CreateSheathingMatrix]
+AS
 	SET NOCOUNT ON;
 BEGIN
 	--delete from Setup.ToFromAttributeMatrix;
 	;WITH cteSheathingJacket
-	as (
-	SELECT G.item_number AS FromAttribute, k.item_number as ToAttribute, MachineName,5 as AttributeNameID,
+	AS (
+	SELECT G.item_number AS FromAttribute, k.item_number AS ToAttribute, MachineName,5 AS AttributeNameID,G.attribute_value,
 	CASE WHEN G.attribute_value = k.attribute_value THEN 0.33*60
 		WHEN G.attribute_value = 'PVC'  THEN 1*60
 		WHEN G.attribute_value = 'PVDF'  THEN 3*60
 		WHEN G.attribute_value = 'NYLON' THEN 6*60
 		WHEN G.attribute_value <> K.attribute_value THEN 2.25*60
+		ELSE 99999
 		END AS Timevalue
 		FROM dbo.Oracle_Item_Attributes K CROSS APPLY dbo.Oracle_Item_Attributes G CROSS APPLY Setup.MachineNames I
-		WHERE K.attribute_name = 'Jacket' and g.attribute_name = 'Jacket'  AND MachineGroupID = 8
+		WHERE K.attribute_name = 'Jacket' AND g.attribute_name = 'Jacket'  AND MachineGroupID = 8
 	)
 	INSERT INTO Setup.AttributeMatrixFromTo(FromAttribute,ToAttribute,  TimeValue, MachineName,AttributeNameID)
 	SELECT K.FromAttribute,K.ToAttribute,K.Timevalue,K.MachineName, K.AttributeNameID
@@ -39,14 +41,15 @@ BEGIN
 	--Insert Color Matrix in From To Table
 
 	;WITH cteSheathingColor
-	as(
-		SELECT DISTINCT G.attribute_value FromAttribute, k.attribute_value ToAttribute,4 as AttributeNameID,
+	AS(
+		SELECT DISTINCT G.attribute_value FromAttribute, k.attribute_value ToAttribute,4 AS AttributeNameID,
 			 CASE WHEN G.attribute_value = K.attribute_value OR K.attribute_value = G.attribute_value THEN 0.00
 			 WHEN G.attribute_value <> 'BLACK' AND K.attribute_value <>'BLACK' THEN 20.00
 			 WHEN G.attribute_value <> 'BLACK' THEN 20.00
 			 WHEN G.attribute_value = 'BLACK' THEN 40.00
+			 ELSE 99999
 			 END AS Timevalue
-		from dbo.Oracle_Item_Attributes G CROSS APPLY dbo.Oracle_Item_Attributes K
+		FROM dbo.Oracle_Item_Attributes G CROSS APPLY dbo.Oracle_Item_Attributes K
 		WHERE G.attribute_name = 'COLOR' AND K.attribute_name = 'COLOR'
 	)
 	INSERT INTO Setup.AttributeMatrixFromTo(FromAttribute,ToAttribute,  TimeValue, MachineName,AttributeNameID)
@@ -54,7 +57,7 @@ BEGIN
 	FROM cteSheathingColor K
 	CROSS APPLY SETUP.MachineNames T
 	LEFT JOIN SETUP.AttributeMatrixFromTo G ON K.FromAttribute = G.FromAttribute AND K.ToAttribute = G.ToAttribute
-	WHERE  T.MachineGroupID = 8 AND (G.FromAttribute IS NULL OR g.ToAttribute is null)
+	WHERE  T.MachineGroupID = 8 AND (G.FromAttribute IS NULL OR g.ToAttribute IS NULL)
 
 
 
