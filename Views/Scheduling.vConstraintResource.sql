@@ -5,16 +5,20 @@ GO
 
 
 
+
+
 -- =============================================
 -- Author:		Bryan Eddy
 -- Create date: 9/15/2017
 -- Description:	Interface view for PT to get resource contraints
 -- =============================================
 CREATE VIEW [Scheduling].[vConstraintResource]
-as
+AS
 
-SELECT MachineName, NominalOD, Max_Length, MaxFiberCount, Binder
-FROM scheduling.ConstraintResource
+SELECT  MachineName, NominalOD, Max_Length, MaxFiberCount, Binder, G.MachineID
+FROM scheduling.ConstraintResource K INNER JOIN Setup.MachineNames G ON G.MachineID = K.MachineID
 	 
+
+
 
 GO

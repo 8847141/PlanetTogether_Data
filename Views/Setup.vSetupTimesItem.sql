@@ -9,6 +9,7 @@ GO
 
 
 
+
 /****** Script for SelectTopNRows command from SSMS  ******/
 CREATE VIEW [Setup].[vSetupTimesItem]
 AS
@@ -18,19 +19,22 @@ SELECT  Item_Number
 		,k.AttributeNameID
       ,[SetupAttributeValue]
       ,[SetupTime]
-      ,K.[MachineName]
+      ,MachineName
 	  ,V.ValueTypeID
 	  ,ValueTypeName
 	  ,ValueTypeDescription	
 	  ,LogicType
 	  ,ApsData
+	  ,I.MachineID
   FROM [Setup].AttributeSetupTimeItem K
   INNER JOIN setup.MachineGroupAttributes G ON K.MachineGroupID = G.MachineGroupID AND G.AttributeNameID = K.AttributeNameID
   INNER JOIN SETUP.ApsSetupAttributeValueType V ON V.ValueTypeID = G.ValueTypeID
   INNER JOIN Setup.ApsSetupAttributes A ON A.AttributeNameID = G.AttributeNameID
-  INNER JOIN Scheduling.MachineCapabilityScheduler I ON I.MachineName = K.MachineName AND I.Setup = K.Setup
+  INNER JOIN Scheduling.MachineCapabilityScheduler I ON I.MachineID = K.MachineID AND I.Setup = K.Setup
+  INNER JOIN Setup.MachineNames E ON E.MachineID = I.MachineID
   WHERE I.ActiveScheduling = 1
  
+
 
 
 

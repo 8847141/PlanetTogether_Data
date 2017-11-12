@@ -27,5 +27,3 @@ CREATE TABLE [Setup].[tblProcessMachines]
 GO
 ALTER TABLE [Setup].[tblProcessMachines] ADD CONSTRAINT [PK_tblProcessMachines] PRIMARY KEY CLUSTERED  ([ProcessID], [MachineID]) ON [PRIMARY]
 GO
-ALTER TABLE [Setup].[tblProcessMachines] ADD CONSTRAINT [FK_tblProcessMachines_MachineNames] FOREIGN KEY ([PlanetTogetherMachineNumber]) REFERENCES [Setup].[MachineNames] ([MachineName]) ON DELETE SET NULL ON UPDATE CASCADE
-GO

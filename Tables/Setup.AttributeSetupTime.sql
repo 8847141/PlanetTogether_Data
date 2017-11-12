@@ -7,12 +7,14 @@ CREATE TABLE [Setup].[AttributeSetupTime]
 [CreatedBy] [nvarchar] (50) COLLATE SQL_Latin1_General_CP1_CI_AS NULL CONSTRAINT [DF_ApsSetupAttributeValue_CreatedBy] DEFAULT (suser_sname()),
 [DateCreated] [datetime] NULL CONSTRAINT [DF_ApsSetupAttributeValue_DateCreated] DEFAULT (getdate()),
 [SetupTime] [float] NULL,
-[MachineName] [nvarchar] (4) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL
+[MachineID] [int] NOT NULL
 ) ON [PRIMARY]
 GO
-ALTER TABLE [Setup].[AttributeSetupTime] ADD CONSTRAINT [PK_ApsSetupAttributeValue_1] PRIMARY KEY CLUSTERED  ([Setup], [AttributeNameID], [MachineName]) ON [PRIMARY]
+ALTER TABLE [Setup].[AttributeSetupTime] ADD CONSTRAINT [PK_ApsSetupAttributeValue_1] PRIMARY KEY CLUSTERED  ([Setup], [AttributeNameID], [MachineID]) ON [PRIMARY]
 GO
-CREATE NONCLUSTERED INDEX [IX_AttributeSetupTime] ON [Setup].[AttributeSetupTime] ([MachineGroupID], [AttributeNameID]) INCLUDE ([MachineName], [Setup], [SetupAttributeValue], [SetupTime]) ON [PRIMARY]
+CREATE NONCLUSTERED INDEX [IX_AttributeSetupTime] ON [Setup].[AttributeSetupTime] ([MachineGroupID], [AttributeNameID]) INCLUDE ([MachineID], [Setup], [SetupAttributeValue], [SetupTime]) ON [PRIMARY]
 GO
-ALTER TABLE [Setup].[AttributeSetupTime] ADD CONSTRAINT [FK_ApsSetupAttributeValue_MachineNames] FOREIGN KEY ([MachineName], [MachineGroupID]) REFERENCES [Setup].[MachineNames] ([MachineName], [MachineGroupID]) ON DELETE CASCADE ON UPDATE CASCADE
+ALTER TABLE [Setup].[AttributeSetupTime] ADD CONSTRAINT [FK_ApsSetupAttributeValue_MachineNames] FOREIGN KEY ([MachineID], [MachineGroupID]) REFERENCES [Setup].[MachineNames] ([MachineID], [MachineGroupID]) ON DELETE CASCADE ON UPDATE CASCADE
+GO
+ALTER TABLE [Setup].[AttributeSetupTime] ADD CONSTRAINT [FK_AttributeSetupTime_ApsSetupAttributes] FOREIGN KEY ([AttributeNameID]) REFERENCES [Setup].[ApsSetupAttributes] ([AttributeNameID]) ON DELETE CASCADE ON UPDATE CASCADE
 GO

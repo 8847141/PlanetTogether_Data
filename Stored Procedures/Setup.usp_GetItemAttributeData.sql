@@ -6,6 +6,7 @@ GO
 
 
 
+
 -- =============================================
 -- Author:      Bryan Eddy
 -- Create date: 9/11/2017
@@ -13,7 +14,7 @@ GO
 -- =============================================
 
 CREATE PROCEDURE [Setup].[usp_GetItemAttributeData]
-as
+AS
 
 	SET NOCOUNT ON;
 BEGIN
@@ -64,15 +65,15 @@ EXEC [Setup].[usp_GetUpdatedFiberCount]
 
 	--Get OD of items from setup data
 	;WITH cteAttributes
-	as (
+	AS (
 		SELECT DISTINCT AttributeValue, K.AttributeName, SetupNumber,P.AttributeNameID
 		FROM [Setup].vInterfaceSetupAttributes K INNER JOIN Setup.ApsSetupAttributeReference G ON K.AttributeID = G.AttributeID
 		  INNER JOIN SETUP.ApsSetupAttributes P ON P.AttributeNameID = G.AttributeNameID 
-		  INNER JOIN setup.MachineNames M ON M.MachineName = PlanetTogetherMachineNumber
+		  INNER JOIN setup.MachineNames M ON M.MachineID = MachineID
 		  WHERE P.AttributeNameID = 3 AND AttributeValue IS NOT NULL
 	),
 	 cteOD
-	as(
+	AS(
 		SELECT DISTINCT item_number, true_operation_seq_num, true_operation_code, AttributeValue, AttributeName,
 		ROW_NUMBER() OVER (PARTITION BY item_number ORDER BY item_number,true_operation_seq_num DESC) RowNumber
 		FROM Oracle_Routes K INNER JOIN cteAttributes G 
@@ -82,17 +83,17 @@ EXEC [Setup].[usp_GetUpdatedFiberCount]
 	UPDATE K
 	SET K.NominalOD = G.AttributeValue
 	FROM cteOD G INNER JOIN Setup.ItemAttributes K ON G.item_number = K.ItemNumber
-	WHERE RowNumber = 1 AND DATEDIFF(day,DateRevised,getdate()) = 0
+	WHERE RowNumber = 1 AND DATEDIFF(DAY,DateRevised,GETDATE()) = 0
 
-	DECLARE @RecordCount int;
+	DECLARE @RecordCount INT;
 	SELECT @RecordCount = COUNT(*) FROM [NAASPB-PRD04\SQL2014].Premise.Schedule.vInterfaceItemAttributes
 	IF @RecordCount > 0 
 		BEGIN
 			--Get OD of items from Premise DB
 			UPDATE G
-			SET G.NominalOD = CASE WHEN G.NominalOD is null THEN K.NominalOD ELSE G.NominalOD END, G.CableColor = CASE WHEN G.CableColor IS NULL THEN K.CableColor ELSE K.CableColor END
+			SET G.NominalOD = CASE WHEN G.NominalOD IS NULL THEN K.NominalOD ELSE G.NominalOD END, G.CableColor = CASE WHEN G.CableColor IS NULL THEN K.CableColor ELSE K.CableColor END
 			FROM [NAASPB-PRD04\SQL2014].Premise.Schedule.vInterfaceItemAttributes K INNER JOIN setup.ItemAttributes G ON G.ItemNumber = K.ItemNumber
-			WHERE g.NominalOD is null
+			WHERE g.NominalOD IS NULL
 		END
 
 	--IF OBJECT_ID('[NAASPB-PRD04\SQL2014].Premise.dbo.AFLPRD_INVSysItemSpec_CAB', 'U') IS NOT NULL 
@@ -103,11 +104,11 @@ EXEC [Setup].[usp_GetUpdatedFiberCount]
 				BEGIN
 					--Get OD of items from Oracle Specs that are still null
 					;WITH cteNominalOD
-					as(
+					AS(
 					SELECT G.ItemNumber, NominalOD, SpecificationElement, CAST(REPLACE(TargetValue,',','.') AS FLOAT) AS attribute_value
-					,row_number() OVER (PARTITION BY K.ItemNumber ORDER BY K.ItemNumber asc,CAST(REPLACE(TargetValue,',','.') AS FLOAT) desc) AS RowNumber
+					,ROW_NUMBER() OVER (PARTITION BY K.ItemNumber ORDER BY K.ItemNumber ASC,CAST(REPLACE(TargetValue,',','.') AS FLOAT) DESC) AS RowNumber
 					  FROM [Scheduling].[vItemAttributes] G INNER JOIN [NAASPB-PRD04\SQL2014].Premise.dbo.AFLPRD_INVSysItemSpec_CAB K ON K.ItemNumber = G.ItemNumber
-					  where NominalOD is null AND K.SpecificationElement in( 'UNIT NOMINAL OD','JACKET OD') AND TargetValue IS NOT NULL  
+					  WHERE NominalOD IS NULL AND K.SpecificationElement IN( 'UNIT NOMINAL OD','JACKET OD') AND TargetValue IS NOT NULL  
 					)
 					UPDATE G
 					SET NominalOD = attribute_value
@@ -125,6 +126,7 @@ EXEC [Setup].[usp_GetUpdatedFiberCount]
 
 
 END
+
 
 
 GO

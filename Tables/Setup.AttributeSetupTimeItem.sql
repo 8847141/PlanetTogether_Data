@@ -8,10 +8,12 @@ CREATE TABLE [Setup].[AttributeSetupTimeItem]
 [CreatedBy] [nvarchar] (50) COLLATE SQL_Latin1_General_CP1_CI_AS NULL CONSTRAINT [DF_AttributeItemSetupTime_CreatedBy] DEFAULT (suser_sname()),
 [DateCreated] [datetime] NULL CONSTRAINT [DF_AttributeItemSetupTime_DateCreated] DEFAULT (getdate()),
 [SetupTime] [float] NULL,
-[MachineName] [nvarchar] (4) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL
+[MachineID] [int] NOT NULL
 ) ON [PRIMARY]
 GO
-ALTER TABLE [Setup].[AttributeSetupTimeItem] ADD CONSTRAINT [PK_AttributeItemSetupTime_1] PRIMARY KEY CLUSTERED  ([Item_Number], [Setup], [AttributeNameID], [MachineName]) ON [PRIMARY]
+ALTER TABLE [Setup].[AttributeSetupTimeItem] ADD CONSTRAINT [PK_AttributeItemSetupTime_1] PRIMARY KEY CLUSTERED  ([Item_Number], [Setup], [AttributeNameID], [MachineID]) ON [PRIMARY]
 GO
-ALTER TABLE [Setup].[AttributeSetupTimeItem] ADD CONSTRAINT [FK_AttributeItemSetupTime_MachineNames] FOREIGN KEY ([MachineName], [MachineGroupID]) REFERENCES [Setup].[MachineNames] ([MachineName], [MachineGroupID]) ON DELETE CASCADE ON UPDATE CASCADE
+ALTER TABLE [Setup].[AttributeSetupTimeItem] ADD CONSTRAINT [FK_AttributeSetupTimeItem_ApsSetupAttributes] FOREIGN KEY ([AttributeNameID]) REFERENCES [Setup].[ApsSetupAttributes] ([AttributeNameID]) ON DELETE CASCADE ON UPDATE CASCADE
+GO
+ALTER TABLE [Setup].[AttributeSetupTimeItem] ADD CONSTRAINT [FK_AttributeSetupTimeItem_MachineNames] FOREIGN KEY ([MachineID], [MachineGroupID]) REFERENCES [Setup].[MachineNames] ([MachineID], [MachineGroupID]) ON DELETE CASCADE ON UPDATE CASCADE
 GO

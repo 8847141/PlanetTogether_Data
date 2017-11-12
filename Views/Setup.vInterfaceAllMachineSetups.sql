@@ -5,15 +5,20 @@ GO
 
 
 
+
+
 /*Interface view of needed information from the Recipe Management Syste / PSS DB*/
 CREATE VIEW [Setup].[vInterfaceAllMachineSetups]
 AS
-SELECT        Setup.tblProcessMachines.ProcessID, Setup.tblProcessMachines.MachineID, Setup.tblProcessMachines.PlanetTogetherMachineNumber MachineName, Setup.tblSetup.SetupID, 
-                         Setup.tblSetup.SetupNumber Setup, Setup.tblSetup.IneffectiveDate, Setup.tblProcessMachines.MachineNumber
+SELECT        Setup.tblProcessMachines.ProcessID, Setup.tblProcessMachines.MachineID--, Setup.tblProcessMachines.PlanetTogetherMachineNumber MachineName
+				, Setup.tblSetup.SetupID, 
+                         Setup.tblSetup.SetupNumber Setup, Setup.tblSetup.IneffectiveDate, Setup.tblProcessMachines.MachineNumber, tblProcessMachines.ProcessMachineID AS PssMachineID
 FROM            Setup.tblSetup INNER JOIN
                          Setup.tblProcessMachines ON Setup.tblSetup.MachineID = Setup.tblProcessMachines.MachineID AND 
                          Setup.tblSetup.ProcessID = Setup.tblProcessMachines.ProcessID
 WHERE        (Setup.tblProcessMachines.Active <> 0)
+
+
 
 
 

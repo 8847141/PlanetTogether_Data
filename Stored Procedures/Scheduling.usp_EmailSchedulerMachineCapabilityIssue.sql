@@ -4,6 +4,7 @@ SET ANSI_NULLS ON
 GO
 
 
+
 -- =============================================
 -- Author:		Bryan Edy
 -- Create date: 10/31/2017
@@ -26,22 +27,23 @@ DROP TABLE #NotSchedulingSetups;
 WITH cteSchedulingActive  --Determine what can schedule
 AS(
 	SELECT DISTINCT G.SETUP
-	FROM setup.[vSetupStatus] K INNER JOIN Scheduling.MachineCapabilityScheduler G ON G.SETUP = K.Setup AND G.MachineName = K.MachineName
+	FROM setup.[vSetupStatus] K INNER JOIN Scheduling.MachineCapabilityScheduler G ON G.SETUP = K.Setup AND G.MachineID = K.Machineid
 	WHERE G.ActiveScheduling = 1
 	)
 SELECT DISTINCT K.Setup AS Setup  
 INTO #NotSchedulingSetups
 FROM setup.[vSetupStatus] K LEFT JOIN cteSchedulingActive G ON G.Setup = K.Setup
-WHERE G.Setup IS NULL AND k.MachineName IS NOT NULL AND K.ActiveSetup = 1
+WHERE G.Setup IS NULL AND k.Machineid IS NOT NULL AND K.ActiveSetup = 1
 
 --SELECT * FROM #NotSchedulingSetups
 
 IF OBJECT_ID(N'tempdb..#Results', N'U') IS NOT NULL
 DROP TABLE #Results;
-SELECT DISTINCT K.MachineName,K.Setup, k.ActiveScheduling, G.ActiveSetup, K.ActiveStatusChangedBy, K.ActiveStatusChangedDate
+SELECT DISTINCT K.MachineID,K.Setup, k.ActiveScheduling, G.ActiveSetup, K.ActiveStatusChangedBy, K.ActiveStatusChangedDate, P.MachineName
 INTO #Results
 FROM #NotSchedulingSetups I INNER JOIN setup.vSetupStatus G ON G.Setup = I.Setup
 INNER JOIN Scheduling.MachineCapabilityScheduler K ON K.SETUP = I.Setup
+INNER JOIN setup.MachineNames P ON P.MachineID = K.MachineID
 WHERE G.ActiveSetup = 1
 
 --SELECT *FROM #Results
@@ -71,11 +73,12 @@ IF @numRows > 0
 					N'<p>'+@body1+'</p>' +
 					N'<p class=MsoNormal><span style=''font-size:11.0pt;font-family:"Calibri","sans-serif";color:#1F497D''>'+
 					N'<table border="1">' +
-					N'<tr><th>Setup</th><th>Machine</th>' +
+					N'<tr><th>Setup</th><th>MachineID</th><th>Machine</th>' +
 					N'<th>Active Setup</th><th>Active Scheduling</th>'+
 					N'<th>Altered By</th><th>Date Altered</th>'+
 					'</tr>' +
 					CAST ( ( SELECT		td=Setup,       '',
+										td=MachineID, '',
 										td=MachineName, '',
 										td=ActiveSetup, '',
 										td=ActiveScheduling, '',
@@ -102,5 +105,6 @@ IF @numRows > 0
 
 	END
 END
+
 
 GO

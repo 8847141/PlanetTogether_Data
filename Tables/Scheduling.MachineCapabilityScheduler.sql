@@ -1,7 +1,7 @@
 CREATE TABLE [Scheduling].[MachineCapabilityScheduler]
 (
 [MachineCapabilityID] [int] NOT NULL IDENTITY(1, 1),
-[MachineName] [nvarchar] (4) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
+[MachineID] [int] NOT NULL,
 [Setup] [nvarchar] (50) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
 [ActiveScheduling] [bit] NULL CONSTRAINT [DF__MachineCa__Activ__4EDDB18F] DEFAULT ((1)),
 [InactiveReason] [nvarchar] (200) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
@@ -42,7 +42,7 @@ BEGIN
 
 END
 GO
-ALTER TABLE [Scheduling].[MachineCapabilityScheduler] ADD CONSTRAINT [pk_MachineCapability] PRIMARY KEY CLUSTERED  ([MachineName], [Setup]) ON [PRIMARY]
+ALTER TABLE [Scheduling].[MachineCapabilityScheduler] ADD CONSTRAINT [pk_MachineCapability] PRIMARY KEY CLUSTERED  ([MachineID], [Setup]) ON [PRIMARY]
 GO
-ALTER TABLE [Scheduling].[MachineCapabilityScheduler] ADD CONSTRAINT [fk_MachineCapability_MachineName] FOREIGN KEY ([MachineName]) REFERENCES [Setup].[MachineNames] ([MachineName]) ON DELETE CASCADE ON UPDATE CASCADE
+ALTER TABLE [Scheduling].[MachineCapabilityScheduler] ADD CONSTRAINT [fk_MachineCapability_MachineName] FOREIGN KEY ([MachineID]) REFERENCES [Setup].[MachineNames] ([MachineID]) ON DELETE CASCADE ON UPDATE CASCADE
 GO

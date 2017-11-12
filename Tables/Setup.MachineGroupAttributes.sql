@@ -13,9 +13,9 @@ ALTER TABLE [Setup].[MachineGroupAttributes] ADD CONSTRAINT [CHK_logic] CHECK ((
 GO
 ALTER TABLE [Setup].[MachineGroupAttributes] ADD CONSTRAINT [PK_SetupMachineAttributes] PRIMARY KEY CLUSTERED  ([MachineGroupID], [AttributeNameID]) ON [PRIMARY]
 GO
-ALTER TABLE [Setup].[MachineGroupAttributes] ADD CONSTRAINT [FK_MachineAttributes_AttributeName] FOREIGN KEY ([AttributeNameID]) REFERENCES [Setup].[ApsSetupAttributes] ([AttributeNameID]) ON DELETE CASCADE ON UPDATE CASCADE
-GO
 ALTER TABLE [Setup].[MachineGroupAttributes] ADD CONSTRAINT [FK_MachineAttributes_MachineGroup] FOREIGN KEY ([MachineGroupID]) REFERENCES [Setup].[MachineGroup] ([MachineGroupID]) ON DELETE CASCADE ON UPDATE CASCADE
 GO
 ALTER TABLE [Setup].[MachineGroupAttributes] ADD CONSTRAINT [FK_MachineAttributes_ValueType] FOREIGN KEY ([ValueTypeID]) REFERENCES [Setup].[ApsSetupAttributeValueType] ([ValueTypeID]) ON DELETE CASCADE ON UPDATE CASCADE
+GO
+ALTER TABLE [Setup].[MachineGroupAttributes] ADD CONSTRAINT [FK_MachineGroupAttributes_ApsSetupAttributes] FOREIGN KEY ([AttributeNameID]) REFERENCES [Setup].[ApsSetupAttributes] ([AttributeNameID]) ON DELETE CASCADE ON UPDATE CASCADE
 GO
