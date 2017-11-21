@@ -4,6 +4,7 @@ SET ANSI_NULLS ON
 GO
 
 
+
 -- =============================================
 -- Author:		Bryan Eddy
 -- Create date: 10/6/2017
@@ -29,8 +30,12 @@ BEGIN
 
 	EXEC Scheduling.usp_MachineCapabilitySchedulerUpdate
 
-	EXEC Scheduling.usp_EmailSchedulerMachineCapabilityIssue
+	--EXEC Scheduling.usp_EmailSchedulerMachineCapabilityIssue
+
+	EXEC [Setup].[usp_GetFiberCountByOperation] 2
+
 END
+
 
 
 GO

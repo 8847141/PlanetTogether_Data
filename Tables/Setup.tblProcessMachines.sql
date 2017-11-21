@@ -19,7 +19,7 @@ CREATE TABLE [Setup].[tblProcessMachines]
 [ProcessTimeDelay] [int] NULL,
 [IncludeInReport] [bit] NOT NULL,
 [PreactorMachineID] [int] NULL,
-[ProcessMachineID] [int] NOT NULL,
+[ProcessMachineID] [int] NULL,
 [PreactorProcessID] [int] NULL,
 [PreactorMachineNumber] [nvarchar] (50) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
 [PlanetTogetherMachineNumber] [nvarchar] (4) COLLATE SQL_Latin1_General_CP1_CI_AS NULL

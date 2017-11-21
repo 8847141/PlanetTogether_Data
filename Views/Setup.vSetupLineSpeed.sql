@@ -10,6 +10,7 @@ GO
 
 
 
+
 /* View created to pull line speeds from Setup Database
 	to supply to Scheduling for Run Speeds
 	7/7/2017 - Bryan Eddy							*/
@@ -24,7 +25,7 @@ CREATE VIEW [Setup].[vSetupLineSpeed]
 
 	 SELECT K.SetupNumber,AttributeValue AS LineSpeed, k.SetupDesc, I.MachineID,
 	ROW_NUMBER() OVER (PARTITION BY K.SetupNumber,I.MachineID ORDER BY K.SetupNumber,I.MachineID,AttributeValue  ASC ) AS RowNumber
-	 FROM  Setup.vInterfaceSetupLineSpeed k INNER JOIN SETUP.MachineReference I ON I.PssMachineID = K.PssMachineID
+	 FROM  Setup.vInterfaceSetupLineSpeed k INNER JOIN SETUP.MachineReference I ON I.PssMachineID = K.PssMachineID AND i.PssProcessID = k.PssProcessID
 	 WHERE ISNUMERIC(AttributeValue) = 1 
 	),
 
@@ -51,6 +52,7 @@ SELECT Item, LineSpeed, G.MachineID,G.Setup, SetupDesc, true_operation_seq_num, 
 FROM cteLineSpeeds G INNER JOIN Scheduling.MachineCapabilityScheduler K ON G.MachineID = K.MachineID AND G.Setup = K.Setup
 INNER JOIN Setup.MachineNames P ON P.MachineID = G.MachineID
 WHERE K.ActiveScheduling = 1
+
 
 
 

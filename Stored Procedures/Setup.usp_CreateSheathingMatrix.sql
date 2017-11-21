@@ -5,9 +5,6 @@ GO
 
 
 
-
-
-
 -- =============================================
 -- Author:      Bryan Eddy
 -- Create date: 7/31/2017
@@ -26,6 +23,7 @@ BEGIN
 		WHEN G.attribute_value = 'PVDF'  THEN 3*60
 		WHEN G.attribute_value = 'NYLON' THEN 6*60
 		WHEN G.attribute_value <> K.attribute_value THEN 2.25*60
+		ELSE 99999
 		END AS Timevalue
 		FROM dbo.Oracle_Item_Attributes K CROSS APPLY dbo.Oracle_Item_Attributes G CROSS APPLY Setup.MachineNames I
 		WHERE K.attribute_name = 'Jacket' AND g.attribute_name = 'Jacket'  AND MachineGroupID = 8
@@ -46,6 +44,7 @@ BEGIN
 			 WHEN G.attribute_value <> 'BLACK' AND K.attribute_value <>'BLACK' THEN 20.00
 			 WHEN G.attribute_value <> 'BLACK' THEN 20.00
 			 WHEN G.attribute_value = 'BLACK' THEN 40.00
+			 ELSE 99999
 			 END AS Timevalue
 		FROM dbo.Oracle_Item_Attributes G CROSS APPLY dbo.Oracle_Item_Attributes K
 		WHERE G.attribute_name = 'COLOR' AND K.attribute_name = 'COLOR'
