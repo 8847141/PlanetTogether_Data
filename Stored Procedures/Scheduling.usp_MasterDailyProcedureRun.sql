@@ -5,10 +5,14 @@ GO
 
 
 
+
+
 -- =============================================
 -- Author:		Bryan Eddy
 -- Create date: 10/6/2017
 -- Description:	Run all major operations for setup and item attributes
+-- Version: 1
+-- Update: n/a
 -- =============================================
 CREATE PROCEDURE [Scheduling].[usp_MasterDailyProcedureRun]
 AS
@@ -30,9 +34,7 @@ BEGIN
 
 	EXEC Scheduling.usp_MachineCapabilitySchedulerUpdate
 
-	--EXEC Scheduling.usp_EmailSchedulerMachineCapabilityIssue
-
-	EXEC [Setup].[usp_GetFiberCountByOperation] 2
+	EXEC [Setup].[usp_GetFiberCountByOperation] @RunType = 2
 
 END
 

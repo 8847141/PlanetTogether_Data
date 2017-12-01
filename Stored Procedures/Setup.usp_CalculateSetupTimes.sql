@@ -2,14 +2,17 @@ SET QUOTED_IDENTIFIER ON
 GO
 SET ANSI_NULLS ON
 GO
+
 -- =============================================
 -- Author:      Bryan Eddy
 -- Create date: 8/11/2017
 -- Description: Run series of procedurse for calculating the setup time
+-- Version: 1
+-- Update: n/a
 -- =============================================
 
 CREATE PROCEDURE [Setup].[usp_CalculateSetupTimes]
-as
+AS
 
 BEGIN
 SET NOCOUNT ON;

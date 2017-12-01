@@ -63,29 +63,18 @@ CREATE TABLE [dbo].[Oracle_Orders]
 [setup_start_date] [datetime] NULL,
 [start_time_date] [datetime] NULL,
 [end_time_date] [datetime] NULL,
-[color] [varchar] (50) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
-[tuber_fiber_count] [float] NULL,
-[cable_fiber_count] [float] NULL,
-[od] [float] NULL,
-[promise_delta] [float] NULL,
-[base_item] [varchar] (50) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
-[fiber_item] [varchar] (50) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
-[fiber_desc] [varchar] (250) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
-[nextres] [varchar] (50) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
-[seq] [float] NULL,
 [to_machine] [varchar] (50) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
 [reel_size] [varchar] (50) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
-[cuts] [float] NULL,
-[lengths] [float] NULL,
 [ship_date] [datetime] NULL,
 [usac_customer] [varchar] (100) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
 [set_name] [varchar] (50) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
 [set_number] [varchar] (50) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
-[end_cable_fiber_count] [float] NULL,
 [customer_name] [varchar] (360) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
 [schedule_ship_date] [datetime] NULL,
 [transfer_to_aps] [varchar] (10) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
-[customer_number] [varchar] (50) COLLATE SQL_Latin1_General_CP1_CI_AS NULL
+[customer_number] [varchar] (50) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+[schedule_approved_date] [datetime] NULL,
+[fiber_set_id] [varchar] (100) COLLATE SQL_Latin1_General_CP1_CI_AS NULL
 ) ON [PRIMARY]
 GO
 ALTER TABLE [dbo].[Oracle_Orders] ADD CONSTRAINT [PK_Oracle_Orders] PRIMARY KEY CLUSTERED  ([master_schedule_id]) ON [PRIMARY]

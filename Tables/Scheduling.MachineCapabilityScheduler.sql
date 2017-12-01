@@ -44,5 +44,7 @@ END
 GO
 ALTER TABLE [Scheduling].[MachineCapabilityScheduler] ADD CONSTRAINT [pk_MachineCapability] PRIMARY KEY CLUSTERED  ([MachineID], [Setup]) ON [PRIMARY]
 GO
+CREATE NONCLUSTERED INDEX [Scheduling_MachineCapabilityScheduler_IXX] ON [Scheduling].[MachineCapabilityScheduler] ([EngineeringAssist]) INCLUDE ([MachineID], [Setup]) ON [PRIMARY]
+GO
 ALTER TABLE [Scheduling].[MachineCapabilityScheduler] ADD CONSTRAINT [fk_MachineCapability_MachineName] FOREIGN KEY ([MachineID]) REFERENCES [Setup].[MachineNames] ([MachineID]) ON DELETE CASCADE ON UPDATE CASCADE
 GO
