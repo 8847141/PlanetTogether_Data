@@ -20,6 +20,8 @@ ALTER TABLE [Setup].[tblSetup] ADD CONSTRAINT [PK_tblSetup] PRIMARY KEY CLUSTERE
 GO
 CREATE NONCLUSTERED INDEX [ix_Setup_tblSetup] ON [Setup].[tblSetup] ([IneffectiveDate]) INCLUDE ([MachineID], [ProcessID], [SetupID], [SetupNumber]) ON [PRIMARY]
 GO
+CREATE NONCLUSTERED INDEX [tblSetup_IneffectiveDate_XI] ON [Setup].[tblSetup] ([IneffectiveDate]) INCLUDE ([MachineID], [SetupDesc], [SetupID], [SetupNumber]) ON [PRIMARY]
+GO
 CREATE NONCLUSTERED INDEX [IX_tblSetup] ON [Setup].[tblSetup] ([ProcessID], [MachineID], [IneffectiveDate], [SetupID], [SetupNumber]) ON [PRIMARY]
 GO
 CREATE NONCLUSTERED INDEX [IX_tblSetup_1] ON [Setup].[tblSetup] ([SetupNumber], [IneffectiveDate], [ProcessID], [MachineID]) ON [PRIMARY]

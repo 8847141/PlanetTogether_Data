@@ -15,14 +15,15 @@ GO
 
 
 
+
 -- =============================================
 -- Author:      Bryan Eddy
 -- Create date: 8/14/2017
 -- Description: Procedure pulls data from various Oracle points to calculate item setup times
--- Version:		1
--- Update:		Added Error handling
---				Changed aramid aggregation procedure to only get data from the primary BOM
---				Changed the QC setup time by fiber count to pull from the Setup.ItemFiberCountByOperation table. 				
+-- Version:		2
+-- Update:		Updated Buffering FiberCount logic.  	
+--				Fiber Count is calculated using the Value Type 4 logic, but then is inserted as a FiberSet with value type 2 logic for PT to interpret
+--				Using the FiberCount calculation is dependent upon if the FiberSet has changed.  			
 -- =============================================
 
 CREATE PROCEDURE [Setup].[usp_CalculateSetupTimesFromOracle]
@@ -216,7 +217,9 @@ DECLARE @ErrorLine INT = ERROR_LINE();
 
 
 	--Insert fibercount time values based on Value Type 4 (multiply depending on the value)
-	--Resource intesive.  Averaging 45 seconds to insert data.  
+	--Fiber Count is calculated using the Value Type 4 logic, but then is inserted as a FiberSet with value type 2 logic for PT to interpret
+	--Using the FiberCount calculation is dependent upon if the FiberSet has changed.  
+	--Reduced to 8 seconds to insert data.  
 	BEGIN TRY
 
 		IF OBJECT_ID(N'tempdb..#MachineCapability', N'U') IS NOT NULL
@@ -235,7 +238,7 @@ DECLARE @ErrorLine INT = ERROR_LINE();
 		
 		BEGIN TRAN
 			INSERT INTO [Setup].AttributeSetupTimeItem (Item_Number,[Setup],[MachineGroupID],MachineID,AttributeNameID,[SetupAttributeValue],[SetupTime])
-			SELECT DISTINCT Item_Number,G.true_operation_code,I.[MachineGroupID],I.MachineID,u.AttributeNameID,FiberCount,FiberCount * TimeValue
+			SELECT DISTINCT Item_Number,G.true_operation_code,I.[MachineGroupID],I.MachineID,8 AttributeNameID,FiberCount,FiberCount * TimeValue		--Calculates the TimeValue per fibercount and then inserts it for FiberSet for PT to pick up
 			FROM Setup.ItemAttributes K INNER JOIN dbo.Oracle_Routes G ON G.item_number = K.ItemNumber 
 			INNER JOIN #MachineCapability P ON P.Setup = G.true_operation_code
 			INNER JOIN Setup.AttributeMatrixVariableValue U ON U.AttributeValue = K.FiberCount AND P.MachineID = U.MachineID

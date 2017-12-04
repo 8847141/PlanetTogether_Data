@@ -6,12 +6,13 @@ GO
 
 
 
+
 CREATE VIEW [Setup].[vMissingSetupData]
 AS
 SELECT DISTINCT I.MachineName, G.AttributeName, G.AttributeNameID, G.ValueTypeID, G.ValueTypeDescription, g.MachineID
 FROM Setup.vSetupTimesItem K RIGHT JOIN Setup.vMachineAttributes G ON G.machineID = K.machineID AND G.AttributeNameID = K.AttributeNameID
 INNER JOIN Setup.MachineNames I ON I.MachineID = G.MachineID
-WHERE k.MachineID IS NULL AND K.AttributeNameID IS NULL
+WHERE k.MachineID IS NULL AND K.AttributeNameID IS NULL AND g.PassToAps = 1
 
 
 
