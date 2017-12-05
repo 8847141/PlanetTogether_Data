@@ -4,21 +4,19 @@ SET ANSI_NULLS ON
 GO
 
 
-
-
-
-
-
-
-
-
+/*
 -- =============================================
 -- Author:      Bryan Eddy
 -- Create date: 11/15/2017
 -- Description: Procedure to aggregate the fiber count for all cables by operation
--- Version: 2
--- Update:	Replaced delete and insert with Merge
+-- Version: 3
+-- Update:	Commented criteria from cteUniqueFiberCountByOp which was causing operations to be missing.
+--			criteria "WHERE cteFiberCountByOp.true_operation_seq_num = cteFiberCountByOp.Min_true_operation_seq_num"
+			Added Merge statement to update or insert any items with a Inspection operation that is not in setup.ItemFiberCountByOperation
+			Added Update statement to update any fiber count 0 items with the oracle product cateogry "Fiber Count"
 -- =============================================
+
+*/
 
 CREATE PROCEDURE [Setup].[usp_GetFiberCountByOperation]
 
@@ -28,25 +26,27 @@ AS
 
 	SET NOCOUNT ON;
 BEGIN
+ 
+		DECLARE @ErrorNumber INT = ERROR_NUMBER();
+		DECLARE @ErrorLine INT = ERROR_LINE();
 
 
-DECLARE @sql NVARCHAR(MAX);
 
 	BEGIN TRY
 		BEGIN TRAN
+		DECLARE @sql NVARCHAR(MAX);
+
 	
 				IF OBJECT_ID(N'tempdb..##BomExplode', N'U') IS NOT NULL
 				DROP TABLE ##BomExplode;
 
 				--DECLARE @RunType INT;
-				--SET @RunType = 1
+				--SET @RunType = 2
 
 				--Run type 1 updates/inserts all item BOM's into dataset
 				IF @RunType = 1
 					BEGIN
-						--DELETE FROM Setup.ItemFiberCountByOperation  --Replaced by Merge statement
-
-			
+						
 						SET @sql = 'SELECT E.*
 						INTO ##BomExplode
 						FROM dbo.Oracle_Items G CROSS APPLY dbo.fn_ExplodeBOM(G.item_number) E
@@ -54,18 +54,17 @@ DECLARE @sql NVARCHAR(MAX);
 					END
 				ELSE --Else update only open order items to greatly reduce the time to run procedure
 					BEGIN
-						--DELETE Setup.ItemFiberCountByOperation   --Replaced by Merge statement
-						--FROM Setup.ItemFiberCountByOperation K INNER JOIN dbo.Oracle_Orders G ON G.assembly_item = K.ItemNumber
 						SET @sql = 'SELECT e.* 
 						INTO ##BomExplode
 						FROM (SELECT distinct assembly_item FROM dbo.Oracle_Orders) G CROSS APPLY dbo.fn_ExplodeBOM(G.assembly_item) E
-						'--WHERE G.assembly_item = ''DNA-32817'''
+						'--WHERE G.assembly_item = ''DNO-11046'''
 					END
 
 				EXEC(@sql)
 
 				CREATE INDEX iBomXplode ON ##BomExplode (comp_item, FinishedGood, ExtendedQuantityPer)
 
+				--Explode all BOM's from the previous query and aggregate the fiber count
 				IF OBJECT_ID(N'tempdb..#FiberCount', N'U') IS NOT NULL
 				DROP TABLE #FiberCount;
 				;WITH cteFiber
@@ -77,7 +76,7 @@ DECLARE @sql NVARCHAR(MAX);
 				),
 				cteFiberCount
 				AS(
-				--INSERT INTO Setup.ItemAttributes(ItemNumber,FiberCount, FiberMeters)
+
 				SELECT FinishedGood,SUM(CAST(ExtendedQuantityPer AS INT)) AS FiberCount, SUM(ExtendedQuantityPer) AS FiberMeters,cteFiber.FinishedGoodOpSeq,cteFiber.alternate_designator
 				FROM cteFiber
 				GROUP BY FinishedGood,cteFiber.FinishedGoodOpSeq,alternate_designator
@@ -88,27 +87,30 @@ DECLARE @sql NVARCHAR(MAX);
 
 				CREATE INDEX IX_FiberCount ON #FiberCount (FinishedGood, FinishedGoodOpSeq, alternate_designator)
 
+
+				--Remove any duplicates found in the #FiberCount and assign the fiber count to the appropriate operation
+				IF OBJECT_ID(N'tempdb..#FiberCountByOp', N'U') IS NOT NULL
+				DROP TABLE #FiberCountByOp;
 				;WITH cteFiberCountByOp
 				AS(
 				SELECT DISTINCT G.true_operation_code, J.FiberCount, G.item_number, G.department_code, J.alternate_designator,FinishedGoodOpSeq,true_operation_seq_num
 				, MIN(G.true_operation_seq_num) OVER (PARTITION BY J.FiberCount, G.item_number, J.alternate_designator, FinishedGoodOpSeq) Min_true_operation_seq_num
 				FROM dbo.Oracle_Routes G 
 				INNER JOIN #FiberCount J ON J.alternate_designator = G.alternate_routing_designator AND J.FinishedGood = G.item_number AND G.operation_seq_num >= j.FinishedGoodOpSeq
-				INNER JOIN Setup.DepartmentIndicator B ON B.department_code = G.department_code
+				INNER JOIN Setup.DepartmentIndicator B ON B.department_code = G.department_code AND g.pass_to_aps = 'y'
 				)
 				,cteUniqueFiberCountByOp
 				AS(
 				SELECT item_number,cteFiberCountByOp.true_operation_code,cteFiberCountByOp.FiberCount,alternate_designator, cteFiberCountByOp.true_operation_seq_num, cteFiberCountByOp.department_code
 				,ROW_NUMBER() OVER (PARTITION BY item_number,cteFiberCountByOp.true_operation_code,alternate_designator ORDER BY cteFiberCountByOp.FiberCount DESC) RowNumber
 				FROM cteFiberCountByOp INNER JOIN Setup.DepartmentIndicator B ON B.department_code = cteFiberCountByOp.department_code
-				WHERE cteFiberCountByOp.true_operation_seq_num = cteFiberCountByOp.Min_true_operation_seq_num
 				)
-				--INSERT INTO Setup.ItemFiberCountByOperation(ItemNumber,TrueOperationCode,FiberCount, PrimaryAlternate)
-				SELECT G.item_number, G.true_operation_code, G.FiberCount, G.alternate_designator
+				SELECT G.item_number, G.true_operation_code, G.FiberCount, G.alternate_designator, G.RowNumber
 				INTO #FiberCountByOp
 				FROM cteUniqueFiberCountByOp G
-				WHERE RowNumber = 1
+				WHERE RowNumber = 1 AND G.true_operation_code IS NOT NULL
 
+                
 				--Merge data set into setup.ItemFiberCountByOperation for fiber count
 				MERGE setup.ItemFiberCountByOperation AS Target
 				USING (
@@ -130,9 +132,7 @@ DECLARE @sql NVARCHAR(MAX);
 	END TRY
 	BEGIN CATCH
 		ROLLBACK TRANSACTION;
- 
-		DECLARE @ErrorNumber INT = ERROR_NUMBER();
-		DECLARE @ErrorLine INT = ERROR_LINE();
+
  
 		PRINT 'Actual error number: ' + CAST(@ErrorNumber AS VARCHAR(10));
 		PRINT 'Actual line number: ' + CAST(@ErrorLine AS VARCHAR(10));
@@ -140,20 +140,69 @@ DECLARE @sql NVARCHAR(MAX);
 		THROW;
 	END CATCH
 
-				--INSERT INTO Setup.ItemAttributes(ItemNumber,FiberCount,FiberMeters)
-				--SELECT DISTINCT K.item_number, 0,0
-				--FROM dbo.Oracle_Items K INNER JOIN dbo.Oracle_BOMs P ON K.item_number = P.item_number
-				--LEFT JOIN setup.ItemAttributes G ON K.item_number = G.ItemNumber
-				--WHERE G.ItemNumber  IS NULL AND K.make_buy = 'MAKE'
-				--ORDER BY item_number
+			--Add any missing items with a QC step with the fiber count of 0
+	BEGIN TRY
+		BEGIN TRAN
+			MERGE setup.ItemFiberCountByOperation AS Target
+			USING (
+					SELECT DISTINCT	K.item_number, A.operation_code, A.alternate_routing_designator, 0 AS FiberCount
+					FROM dbo.Oracle_Items K LEFT JOIN Setup.ItemFiberCountByOperation G ON K.item_number = G.ItemNumber
+					LEFT JOIN dbo.Oracle_Routes	A ON A.item_number = K.item_number 
+					INNER JOIN Setup.DepartmentIndicator B ON B.department_code = A.department_code
+					WHERE make_buy  = 'BUY' AND G.ItemNumber IS NULL AND A.pass_to_aps = 'y'
+				) AS Source ON (Source.item_number = Target.ItemNumber AND Source.operation_code = Target.TrueOperationCode
+					AND Target.PrimaryAlternate = Source.alternate_routing_designator)
+			WHEN MATCHED THEN
+				UPDATE SET Target.FiberCount = Source.FiberCount
+			WHEN NOT MATCHED BY TARGET THEN
+				INSERT (ItemNumber, TrueOperationCode, FiberCount, PrimaryAlternate)
+				VALUES	(Source.item_number, Source.operation_code, Source.FiberCount, Source.alternate_routing_designator);
+			--OUTPUT $action, Inserted.*, Deleted.*; 
+		COMMIT TRAN
+	END TRY
+	BEGIN CATCH
+		ROLLBACK TRANSACTION;
 
+ 
+		PRINT 'Actual error number: ' + CAST(@ErrorNumber AS VARCHAR(10));
+		PRINT 'Actual line number: ' + CAST(@ErrorLine AS VARCHAR(10));
+ 
+		THROW;
+	END CATCH
+
+
+	--Update any fiber count that is 0 and has a fiber count product category > 0
+	BEGIN TRY
+		BEGIN TRAN
+			;WITH cteZeroFiberCount
+			AS(
+				SELECT G.ItemNumber, k.TrueOperationCode, k.PrimaryAlternate,CategoryName, k.ItemFiberCountByOp_ID
+				FROM Setup.ItemFiberCountByOperation K INNER JOIN [NAASPB-PRD04\SQL2014].Premise.dbo.AFLPRD_INVItmCatg_CAB G ON K.ItemNumber = G.ItemNumber
+				WHERE FiberCount = 0 AND G.CategorySetName LIKE '%FIBER COUNT%' --AND ISNUMERIC(G.CategoryName) = 1
+
+			)
+			UPDATE K
+			SET FiberCount = X.FiberCount
+			FROM(
+				SELECT SUM(CAST(cteZeroFiberCount.CategoryName AS INT)) FiberCount, cteZeroFiberCount.ItemFiberCountByOp_ID
+				FROM cteZeroFiberCount
+				GROUP BY ItemNumber, TrueOperationCode, PrimaryAlternate,ItemFiberCountByOp_ID
+				) X INNER JOIN Setup.ItemFiberCountByOperation K ON K.ItemFiberCountByOp_ID = X.ItemFiberCountByOp_ID
+		COMMIT TRAN
+	END TRY
+	BEGIN CATCH
+		ROLLBACK TRANSACTION;
+
+ 
+		PRINT 'Actual error number: ' + CAST(@ErrorNumber AS VARCHAR(10));
+		PRINT 'Actual line number: ' + CAST(@ErrorLine AS VARCHAR(10));
+ 
+		THROW;
+	END CATCH
 
 
 
 END
-
-
-
 
 
 

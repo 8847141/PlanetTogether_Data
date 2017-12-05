@@ -4,16 +4,12 @@ SET ANSI_NULLS ON
 GO
 
 
-
-
-
-
 -- =============================================
 -- Author:      Bryan Eddy
 -- Create date: 8/23/2017
 -- Description: Procedure to update the fiber count of cables with open orders
--- Version: 1
--- Update: Changed delete/inser to Merge the data.  Also added the ability to either update all fiber counts or just open order items
+-- Version: 2
+-- Update:	Added Merge statement for items with no fiber count
 -- =============================================
 
 CREATE PROCEDURE [Setup].[usp_GetFiberCount]
@@ -99,7 +95,6 @@ DECLARE @BomExplode TABLE(
 				INNER JOIN @BomExplode P ON P.comp_item = G.item_number
 				WHERE  ((part IN ('Fiber','Ribbon') AND position = 4)  OR (part ='Bare Ribbon' AND position = 5)) AND make_buy = 'buy' AND p.alternate_designator = 'primary'
 			)
-			--INSERT INTO Setup.ItemAttributes(ItemNumber,FiberCount, FiberMeters)
 			SELECT FinishedGood,SUM(CAST(ExtendedQuantityPer AS INT)) AS FiberCount,SUM(ExtendedQuantityPer) AS FiberMeters
 			INTO #FiberCount
 			FROM cteFiber
@@ -120,9 +115,7 @@ DECLARE @BomExplode TABLE(
 							Target.FiberMeters = Source.FiberMeters
 			WHEN NOT MATCHED BY TARGET THEN
 				INSERT (ItemNumber, FiberCount, FiberMeters)
-				VALUES (Source.FinishedGood, Source.FiberCount, Source.FiberMeters)
-
-			;
+				VALUES (Source.FinishedGood, Source.FiberCount, Source.FiberMeters);
 
 		COMMIT TRAN
 	END TRY
@@ -136,26 +129,34 @@ DECLARE @BomExplode TABLE(
 		THROW;
 	END CATCH;
 
-	----Get fibre count for all other items not found above.  Insert fiber count of 0.
-	--BEGIN TRY
-	--	BEGIN TRAN
-	--		INSERT INTO Setup.ItemAttributes(ItemNumber,FiberCount,FiberMeters)
-	--		SELECT DISTINCT K.assembly_item, 0,0
-	--		FROM #OrderItems K INNER JOIN dbo.Oracle_BOMs P ON K.assembly_item = P.item_number
-	--		LEFT JOIN setup.ItemAttributes G ON K.assembly_item = G.ItemNumber
-	--		WHERE G.ItemNumber  IS NULL 
-	--		ORDER BY assembly_item
-	--		COMMIT TRAN
-	--END TRY
-	--BEGIN CATCH
-	--	IF @@TRANCOUNT > 0
-	--	ROLLBACK TRANSACTION;
+	--Get fibre count for all other items not found above.  Insert fiber count of 0.
+	BEGIN TRY
+		BEGIN TRAN
+
+
+			MERGE setup.ItemAttributes AS Target
+			USING (SELECT DISTINCT K.assembly_item, 0 FiberCount ,0 FiberMeters
+			FROM #OrderItems K INNER JOIN dbo.Oracle_BOMs P ON K.assembly_item = P.item_number
+			LEFT JOIN setup.ItemAttributes G ON K.assembly_item = G.ItemNumber
+			WHERE G.ItemNumber  IS NULL ) AS Source
+			ON (Target.ItemNumber = Source.assembly_item)
+			WHEN MATCHED THEN
+				UPDATE SET	Target.FiberCount = source.FiberCount,
+							Target.FiberMeters = Source.FiberMeters
+			WHEN NOT MATCHED BY TARGET THEN
+				INSERT (ItemNumber, FiberCount, FiberMeters)
+				VALUES (Source.assembly_item, Source.FiberCount, Source.FiberMeters);
+		COMMIT TRAN
+	END TRY
+	BEGIN CATCH
+		IF @@TRANCOUNT > 0
+		ROLLBACK TRANSACTION;
  
-	--	PRINT 'Actual error number: ' + CAST(@ErrorNumber AS VARCHAR(10));
-	--	PRINT 'Actual line number: ' + CAST(@ErrorLine AS VARCHAR(10));
+		PRINT 'Actual error number: ' + CAST(@ErrorNumber AS VARCHAR(10));
+		PRINT 'Actual line number: ' + CAST(@ErrorLine AS VARCHAR(10));
  
-	--	THROW;
-	--END CATCH;
+		THROW;
+	END CATCH;
 
 
 
