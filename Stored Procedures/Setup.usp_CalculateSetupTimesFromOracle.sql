@@ -16,14 +16,13 @@ GO
 
 
 
+
 -- =============================================
 -- Author:      Bryan Eddy
 -- Create date: 8/14/2017
 -- Description: Procedure pulls data from various Oracle points to calculate item setup times
--- Version:		2
--- Update:		Updated Buffering FiberCount logic.  	
---				Fiber Count is calculated using the Value Type 4 logic, but then is inserted as a FiberSet with value type 2 logic for PT to interpret
---				Using the FiberCount calculation is dependent upon if the FiberSet has changed.  			
+-- Version:		3
+-- Update:		Added logic for color sequencing calculation  			
 -- =============================================
 
 CREATE PROCEDURE [Setup].[usp_CalculateSetupTimesFromOracle]
@@ -325,7 +324,27 @@ DECLARE @ErrorLine INT = ERROR_LINE();
 
 
 
-
+	
+	--Insert color prefered sequence
+	BEGIN TRY
+		BEGIN TRAN
+			INSERT INTO [Setup].AttributeSetupTimeItem (Item_Number,[Setup],[MachineGroupID],AttributeSetupTimeItem.MachineID,AttributeNameID,[SetupAttributeValue],[SetupTime])
+			SELECT k.Item_Number, k.Setup, I.MachineGroupID, K.MachineID, I.AttributeNameID, PreferedSequence, 0 AS SetupTime
+			FROM [Setup].AttributeSetupTimeItem k INNER JOIN Setup.ColorSequencePreference J ON J.Color = k.SetupAttributeValue
+				INNER JOIN Setup.MachineGroupAttributes I ON I.MachineGroupID = K.MachineGroupID
+				WHERE I.AttributeNameID = 38
+		COMMIT TRAN
+	END TRY
+	BEGIN CATCH
+		IF @@TRANCOUNT > 0
+		ROLLBACK TRANSACTION;
+ 
+ 
+		PRINT 'Actual error number: ' + CAST(@ErrorNumber AS VARCHAR(10));
+		PRINT 'Actual line number: ' + CAST(@ErrorLine AS VARCHAR(10));
+ 
+		THROW;
+	END CATCH;
 
 END
 

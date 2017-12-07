@@ -1,4 +1,7 @@
 SET IDENTITY_INSERT [Setup].[ApsSetupAttributes] ON
+INSERT INTO [Setup].[ApsSetupAttributes] ([AttributeNameID], [AttributeName], [CreatedBy], [DateCreated]) VALUES (38, N'ColorSequence', N'NAA\eddybc', '2017-12-07 15:49:44.257')
+SET IDENTITY_INSERT [Setup].[ApsSetupAttributes] OFF
+SET IDENTITY_INSERT [Setup].[ApsSetupAttributes] ON
 INSERT INTO [Setup].[ApsSetupAttributes] ([AttributeNameID], [AttributeName], [CreatedBy], [DateCreated]) VALUES (1, N'Armor', N'NAA\eddybc', '2017-08-01 13:12:09.630')
 INSERT INTO [Setup].[ApsSetupAttributes] ([AttributeNameID], [AttributeName], [CreatedBy], [DateCreated]) VALUES (2, N'BaseSetupTime', N'NAA\eddybc', '2017-08-01 13:37:37.190')
 INSERT INTO [Setup].[ApsSetupAttributes] ([AttributeNameID], [AttributeName], [CreatedBy], [DateCreated]) VALUES (3, N'OD', N'NAA\eddybc', '2017-08-01 13:12:09.630')

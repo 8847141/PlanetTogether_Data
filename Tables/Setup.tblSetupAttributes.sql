@@ -2,7 +2,7 @@ CREATE TABLE [Setup].[tblSetupAttributes]
 (
 [SetupID] [int] NOT NULL,
 [AttributeID] [int] NOT NULL,
-[IneffectiveDate] [datetime2] (0) NOT NULL,
+[IneffectiveDate] [datetime] NOT NULL,
 [ProcessID] [int] NULL,
 [MachineID] [int] NULL,
 [EffectiveDate] [datetime2] (0) NULL,
@@ -24,8 +24,6 @@ CREATE TABLE [Setup].[tblSetupAttributes]
 [ApprovedOnDate] [datetime2] (0) NULL,
 [SSMA_TimeStamp] [timestamp] NOT NULL
 ) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
-GO
-ALTER TABLE [Setup].[tblSetupAttributes] ADD CONSTRAINT [PK_tblSetupAttributes] PRIMARY KEY CLUSTERED  ([SetupID], [AttributeID], [IneffectiveDate]) ON [PRIMARY]
 GO
 CREATE NONCLUSTERED INDEX [IX_tblSetupAttributes] ON [Setup].[tblSetupAttributes] ([AttributeID], [IneffectiveDate], [SetupID], [MachineID], [AttributeValue]) ON [PRIMARY]
 GO
