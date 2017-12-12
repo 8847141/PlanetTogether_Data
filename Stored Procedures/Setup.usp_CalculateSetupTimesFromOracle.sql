@@ -21,8 +21,8 @@ GO
 -- Author:      Bryan Eddy
 -- Create date: 8/14/2017
 -- Description: Procedure pulls data from various Oracle points to calculate item setup times
--- Version:		3
--- Update:		Added logic for color sequencing calculation  			
+-- Version:		4
+-- Update:		Added table truncate statement to clear table prior to the inserting statements 			
 -- =============================================
 
 CREATE PROCEDURE [Setup].[usp_CalculateSetupTimesFromOracle]
@@ -31,8 +31,12 @@ AS
 	SET NOCOUNT ON;
 BEGIN
 
+TRUNCATE TABLE SETUP.AttributeSetupTimeItem
+
 DECLARE @ErrorNumber INT = ERROR_NUMBER();
 DECLARE @ErrorLine INT = ERROR_LINE();
+
+
 
 	--Add to procedure to only grab the top row in case of dupblicate values
 	IF OBJECT_ID(N'tempdb..#Temp', N'U') IS NOT NULL

@@ -7,8 +7,8 @@ GO
 -- Author:      Bryan Eddy
 -- Create date: 8/11/2017
 -- Description: Run series of procedurse for calculating the setup time
--- Version: 1
--- Update: n/a
+-- Version: 2
+-- Update: Removed delete from statements and added truncate table statements to the procedures
 -- =============================================
 
 CREATE PROCEDURE [Setup].[usp_CalculateSetupTimes]
@@ -16,10 +16,6 @@ AS
 
 BEGIN
 SET NOCOUNT ON;
-
-	DELETE FROM setup.AttributeSetupTime
-
-	DELETE FROM SETUP.AttributeSetupTimeItem
 
 	EXEC setup.usp_CalculateSetupTimesFromSetupDB
 

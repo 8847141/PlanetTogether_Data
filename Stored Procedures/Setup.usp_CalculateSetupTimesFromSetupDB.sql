@@ -15,14 +15,16 @@ GO
 -- Author:      Bryan Eddy
 -- Create date: 8/11/2017
 -- Description: Create setup times for all attributes from Setup DB
--- Version: 1
--- Update: Added Error handling
+-- Version: 2
+-- Update: Added table truncate statement to clear table prior to the inserting statements 
 -- =============================================
 
 CREATE PROCEDURE [Setup].[usp_CalculateSetupTimesFromSetupDB]
 AS
 	SET NOCOUNT ON;
 BEGIN
+
+TRUNCATE TABLE [Setup].AttributeSetupTime
 
 DECLARE @ErrorNumber INT = ERROR_NUMBER();
 DECLARE @ErrorLine INT = ERROR_LINE();
