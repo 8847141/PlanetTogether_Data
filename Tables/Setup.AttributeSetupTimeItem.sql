@@ -1,7 +1,7 @@
 CREATE TABLE [Setup].[AttributeSetupTimeItem]
 (
 [Item_Number] [nvarchar] (30) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
-[Setup] [nvarchar] (10) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
+[Setup] [nvarchar] (50) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
 [MachineGroupID] [int] NOT NULL,
 [AttributeNameID] [int] NOT NULL,
 [SetupAttributeValue] [nvarchar] (30) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,

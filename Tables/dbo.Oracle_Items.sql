@@ -28,3 +28,5 @@ CREATE NONCLUSTERED INDEX [IX_Oracle_Items] ON [dbo].[Oracle_Items] ([inventory_
 GO
 CREATE NONCLUSTERED INDEX [IX_Oracle_Items_1] ON [dbo].[Oracle_Items] ([item_number], [inventory_item_status_code]) ON [PRIMARY]
 GO
+CREATE NONCLUSTERED INDEX [Oracle_Items_IX] ON [dbo].[Oracle_Items] ([make_buy]) INCLUDE ([item_description], [item_number], [product_class]) ON [PRIMARY]
+GO
