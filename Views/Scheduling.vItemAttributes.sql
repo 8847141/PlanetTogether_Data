@@ -4,10 +4,12 @@ SET ANSI_NULLS ON
 GO
 
 
+
 CREATE VIEW [Scheduling].[vItemAttributes]
 AS
-SELECT        ItemNumber, CableColor, Gel, NominalOD, FiberCount, FiberMeters,RevisedBy, DateRevised, CreatedBy, DateCreated,ContainsFiberIdBinders
+SELECT        ItemNumber, CableColor, Gel, NominalOD, FiberCount, FiberMeters,RevisedBy, DateRevised, CreatedBy, DateCreated,ContainsFiberIdBinders, ContainsBinder
 FROM            Setup.ItemAttributes
+
 
 
 GO

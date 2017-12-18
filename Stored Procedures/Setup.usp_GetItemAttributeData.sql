@@ -13,8 +13,8 @@ GO
 -- Author:      Bryan Eddy
 -- Create date: 9/11/2017
 -- Description: Procedure insert data into Setup.ItemAttributes table for Oracle to pick up
--- Version: 1
--- Update:	Added error handling and changed Setup.usp_GetUpdatedFiberCount to Setup.usp_GetFiberCount 2
+-- Version: 2
+-- Update:	Added update statement to identify if a binder exists in the Bom for the item.
 -- =============================================
 
 CREATE PROCEDURE [Setup].[usp_GetItemAttributeData]
@@ -199,6 +199,26 @@ BEGIN TRY
 			FROM DBO.Oracle_Item_Attributes K INNER JOIN DBO.Oracle_BOMs G ON K.item_number = G.comp_item
 			INNER JOIN setup.ItemAttributes P ON P.ItemNumber = G.item_number
 			WHERE attribute_value = 'COLOR BINDER'
+		COMMIT TRAN
+	END TRY
+	BEGIN CATCH
+		IF @@TRANCOUNT > 0
+		ROLLBACK TRANSACTION;
+ 
+		PRINT 'Actual error number: ' + CAST(@ErrorNumber AS VARCHAR(10));
+		PRINT 'Actual line number: ' + CAST(@ErrorLine AS VARCHAR(10));
+ 
+		THROW;
+	END CATCH;
+
+	--Get if cable contains any binder
+	BEGIN TRY
+		BEGIN TRAN
+			UPDATE P
+			SET P.ContainsBinder = 1
+			FROM DBO.Oracle_BOMs G 
+			INNER JOIN setup.ItemAttributes P ON P.ItemNumber = G.item_number
+			WHERE G.comp_item LIKE 'bin%'
 		COMMIT TRAN
 	END TRY
 	BEGIN CATCH

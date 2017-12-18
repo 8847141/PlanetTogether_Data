@@ -10,7 +10,8 @@ CREATE TABLE [Setup].[MachineNames]
 [Grouping] [bit] NULL CONSTRAINT [DF_MachineNames_Grouping] DEFAULT ((1)),
 [CapacityTypeID] [int] NULL,
 [MachineRunEffeciency] [decimal] (5, 4) NULL,
-[MachineSetupEffeciency] [decimal] (5, 4) NULL
+[MachineSetupEffeciency] [decimal] (5, 4) NULL,
+[ProdItemValueUUID] [uniqueidentifier] NULL
 ) ON [PRIMARY]
 GO
 ALTER TABLE [Setup].[MachineNames] ADD CONSTRAINT [PK_MachineNames] PRIMARY KEY CLUSTERED  ([MachineID]) ON [PRIMARY]

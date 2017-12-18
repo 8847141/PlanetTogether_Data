@@ -11,7 +11,8 @@ CREATE TABLE [Setup].[ItemAttributes]
 [RevisedBy] [nvarchar] (50) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
 [ContainsFiberIdBinders] [bit] NULL CONSTRAINT [DF_ItemAttributes_ContainsFiberIdBinders] DEFAULT ((0)),
 [JacketMaterial] [nvarchar] (30) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
-[FiberMeters] [float] NULL
+[FiberMeters] [float] NULL,
+[ContainsBinder] [bit] NULL CONSTRAINT [DF_ItemAttributes_ContainsBinder] DEFAULT ((0))
 ) ON [PRIMARY]
 GO
 SET QUOTED_IDENTIFIER ON
