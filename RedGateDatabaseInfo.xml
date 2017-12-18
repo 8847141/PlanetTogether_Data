@@ -57,7 +57,7 @@
     <DataWriteAllFilesInOneDirectory>True</DataWriteAllFilesInOneDirectory>
   </WriteToFileOptions>
   <DataFileSet>
-    <Count>17</Count>
+    <Count>18</Count>
     <DataFile>Scheduling.OperationRunType_Data.sql</DataFile>
     <DataFile>Setup.ApsSetupAttributes_Data.sql</DataFile>
     <DataFile>Setup.ApsSetupAttributeSource_Data.sql</DataFile>
@@ -75,5 +75,6 @@
     <DataFile>Setup.AttributeMatrixVariableValue_Data.sql</DataFile>
     <DataFile>Setup.DepartmentIndicator_Data.sql</DataFile>
     <DataFile>Setup.ColorSequencePreference_Data.sql</DataFile>
+    <DataFile>dbo.APS_ProductClass_ToExclude_HardCoded_Data.sql</DataFile>
   </DataFileSet>
 </DatabaseInformation>
