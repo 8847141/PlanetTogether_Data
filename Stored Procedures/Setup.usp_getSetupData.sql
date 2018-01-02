@@ -37,4 +37,9 @@ BEGIN
 	EXEC master..xp_cmdshell @SQLQuery OUTPUT
 
 END
+
+GO
+GRANT EXECUTE ON  [Setup].[usp_getSetupData] TO [NAA\gilfigw]
+GO
+GRANT EXECUTE ON  [Setup].[usp_getSetupData] TO [NAA\SPB_Scheduling_RW]
 GO
