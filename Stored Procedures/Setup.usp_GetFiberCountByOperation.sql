@@ -4,16 +4,14 @@ SET ANSI_NULLS ON
 GO
 
 
+
 /*
 -- =============================================
 -- Author:      Bryan Eddy
 -- Create date: 11/15/2017
 -- Description: Procedure to aggregate the fiber count for all cables by operation
--- Version: 3
--- Update:	Commented criteria from cteUniqueFiberCountByOp which was causing operations to be missing.
---			criteria "WHERE cteFiberCountByOp.true_operation_seq_num = cteFiberCountByOp.Min_true_operation_seq_num"
-			Added Merge statement to update or insert any items with a Inspection operation that is not in setup.ItemFiberCountByOperation
-			Added Update statement to update any fiber count 0 items with the oracle product cateogry "Fiber Count"
+-- Version: 4
+-- Update:	Added procedure to catch 0 fiber items and update them according to the Q operation
 -- =============================================
 
 */
@@ -188,6 +186,31 @@ BEGIN
 				FROM cteZeroFiberCount
 				GROUP BY ItemNumber, TrueOperationCode, PrimaryAlternate,ItemFiberCountByOp_ID
 				) X INNER JOIN Setup.ItemFiberCountByOperation K ON K.ItemFiberCountByOp_ID = X.ItemFiberCountByOp_ID
+		COMMIT TRAN
+	END TRY
+	BEGIN CATCH
+		ROLLBACK TRANSACTION;
+
+ 
+		PRINT 'Actual error number: ' + CAST(@ErrorNumber AS VARCHAR(10));
+		PRINT 'Actual line number: ' + CAST(@ErrorLine AS VARCHAR(10));
+ 
+		THROW;
+	END CATCH
+
+	--Update any fiber count that is 0 to the last 3 positions of the Q operation.
+	BEGIN TRY
+		BEGIN TRAN
+			;WITH cteFiberCount
+			AS(
+				SELECT K.ItemNumber, k.TrueOperationCode, CAST(RIGHT(K.TrueOperationCode,3) AS INT) AS FiberCount,ItemFiberCountByOp_ID
+				FROM Setup.ItemFiberCountByOperation K 
+				WHERE FiberCount = 0 AND ISNUMERIC(RIGHT(K.TrueOperationCode,3)) = 1
+
+			)
+			UPDATE K
+			SET FiberCount = X.FiberCount
+			FROM cteFiberCount X INNER JOIN Setup.ItemFiberCountByOperation K ON K.ItemFiberCountByOp_ID = X.ItemFiberCountByOp_ID
 		COMMIT TRAN
 	END TRY
 	BEGIN CATCH

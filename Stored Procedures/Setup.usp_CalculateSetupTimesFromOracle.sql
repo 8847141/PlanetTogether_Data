@@ -5,24 +5,12 @@ GO
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
 -- =============================================
 -- Author:      Bryan Eddy
 -- Create date: 8/14/2017
 -- Description: Procedure pulls data from various Oracle points to calculate item setup times
--- Version:		4
--- Update:		Added table truncate statement to clear table prior to the inserting statements 			
+-- Version:		5
+-- Update:		Updated QC base setup time to pull from ItemFiberCountByOperation
 -- =============================================
 
 CREATE PROCEDURE [Setup].[usp_CalculateSetupTimesFromOracle]
@@ -265,11 +253,11 @@ DECLARE @ErrorLine INT = ERROR_LINE();
 		BEGIN TRAN
 			INSERT INTO [Setup].AttributeSetupTimeItem (Item_Number,[Setup],[MachineGroupID],MachineID,AttributeNameID,[SetupAttributeValue],[SetupTime])
 			SELECT DISTINCT Item_Number,operation_code,[MachineGroupID],p.MachineID AS MachineID,u.AttributeNameID,FiberCount,TimeValue
-			FROM Setup.ItemAttributes K INNER JOIN dbo.Oracle_Routes G ON G.item_number = K.ItemNumber 
+			FROM setup.ItemFiberCountByOperation K INNER JOIN dbo.Oracle_Routes G ON G.item_number = K.ItemNumber AND K.TrueOperationCode = G.true_operation_code
 			INNER JOIN Setup.DepartmentIndicator P ON p.department_code = g.department_code
 			INNER JOIN Setup.AttributeMatrixVariableValue U ON U.AttributeValue = K.FiberCount AND P.MachineID = U.MachineID
 			INNER JOIN Setup.vMachineAttributes Y ON Y.MachineID = P.MachineID AND Y.AttributeNameID = U.AttributeNameID 
-			WHERE ValueTypeID = 7 AND pass_to_aps NOT IN ('d','N') 
+			WHERE ValueTypeID = 7 AND pass_to_aps NOT IN ('d','N') --AND K.ItemNumber = 'DNS-OSP-0063'
 		COMMIT TRAN
 	END TRY
 	BEGIN CATCH
