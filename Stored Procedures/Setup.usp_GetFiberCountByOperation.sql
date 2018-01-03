@@ -5,13 +5,15 @@ GO
 
 
 
+
 /*
 -- =============================================
 -- Author:      Bryan Eddy
 -- Create date: 11/15/2017
 -- Description: Procedure to aggregate the fiber count for all cables by operation
--- Version: 4
--- Update:	Added procedure to catch 0 fiber items and update them according to the Q operation
+-- Version: 5
+-- Update:	Added query to insert items missing from Setup.ItemFiberCountByOperation table.
+			Added query to insert make items missing from the table with an inspection step
 -- =============================================
 
 */
@@ -52,11 +54,20 @@ BEGIN
 					END
 				ELSE --Else update only open order items to greatly reduce the time to run procedure
 					BEGIN
-						SET @sql = 'SELECT e.* 
+						SET @sql = 'SELECT X.* 
 						INTO ##BomExplode
-						FROM (SELECT distinct assembly_item FROM dbo.Oracle_Orders) G CROSS APPLY dbo.fn_ExplodeBOM(G.assembly_item) E
+						FROM (
+							SELECT e.*
+							FROM (SELECT distinct assembly_item FROM dbo.Oracle_Orders) G CROSS APPLY dbo.fn_ExplodeBOM(G.assembly_item) E
+							UNION
+							SELECT e.* 
+							FROM (SELECT distinct E.item_number 
+									FROM dbo.Oracle_Items E left JOIN SETUP.ItemFiberCountByOperation I ON I.ItemNumber = E.item_number
+									WHERE I.ItemNumber IS NULL AND E.make_buy =''make'' ) G CROSS APPLY dbo.fn_ExplodeBOM(G.item_number) E
+								)X
 						'--WHERE G.assembly_item = ''DNO-11046'''
 					END
+
 
 				EXEC(@sql)
 
@@ -99,9 +110,9 @@ BEGIN
 				)
 				,cteUniqueFiberCountByOp
 				AS(
-				SELECT item_number,cteFiberCountByOp.true_operation_code,cteFiberCountByOp.FiberCount,alternate_designator, cteFiberCountByOp.true_operation_seq_num, cteFiberCountByOp.department_code
-				,ROW_NUMBER() OVER (PARTITION BY item_number,cteFiberCountByOp.true_operation_code,alternate_designator ORDER BY cteFiberCountByOp.FiberCount DESC) RowNumber
-				FROM cteFiberCountByOp INNER JOIN Setup.DepartmentIndicator B ON B.department_code = cteFiberCountByOp.department_code
+					SELECT item_number,cteFiberCountByOp.true_operation_code,cteFiberCountByOp.FiberCount,alternate_designator, cteFiberCountByOp.true_operation_seq_num, cteFiberCountByOp.department_code
+					,ROW_NUMBER() OVER (PARTITION BY item_number,cteFiberCountByOp.true_operation_code,alternate_designator ORDER BY cteFiberCountByOp.FiberCount DESC) RowNumber
+					FROM cteFiberCountByOp INNER JOIN Setup.DepartmentIndicator B ON B.department_code = cteFiberCountByOp.department_code
 				)
 				SELECT G.item_number, G.true_operation_code, G.FiberCount, G.alternate_designator, G.RowNumber
 				INTO #FiberCountByOp
@@ -126,6 +137,33 @@ BEGIN
 
 				IF OBJECT_ID(N'tempdb..##BomExplode', N'U') IS NOT NULL
 				DROP TABLE ##BomExplode;
+		COMMIT TRAN
+	END TRY
+	BEGIN CATCH
+		ROLLBACK TRANSACTION;
+
+ 
+		PRINT 'Actual error number: ' + CAST(@ErrorNumber AS VARCHAR(10));
+		PRINT 'Actual line number: ' + CAST(@ErrorLine AS VARCHAR(10));
+ 
+		THROW;
+	END CATCH
+
+	--Insert any missing make item's with an inspection step
+		BEGIN TRY
+		BEGIN TRAN
+			INSERT INTO Setup.ItemFiberCountByOperation
+			(
+				ItemNumber,
+				TrueOperationCode,
+				PrimaryAlternate,
+				FiberCount
+			)
+			SELECT DISTINCT G.item_number, G.operation_code, G.alternate_routing_designator, 0
+			FROM Setup.ItemFiberCountByOperation k RIGHT JOIN dbo.Oracle_Routes G
+			 ON K.ItemNumber = G.item_number AND G.operation_code = K.TrueOperationCode AND k.PrimaryAlternate = G.alternate_routing_designator
+			INNER JOIN Setup.DepartmentIndicator i ON i.department_code = g.department_code
+			WHERE K.ItemNumber IS NULL AND G.pass_to_aps = 'y' --AND G.item_number = 'DNO-9269'
 		COMMIT TRAN
 	END TRY
 	BEGIN CATCH

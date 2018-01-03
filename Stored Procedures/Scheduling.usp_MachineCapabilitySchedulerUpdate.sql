@@ -7,14 +7,15 @@ GO
 
 
 
+
 --/****** Script for SelectTopNRows command from SSMS  ******/
 
 
 /*	Author:		Bryan Eddy
 	Date:		10/25/2017
 	Desc:		Daily update of all setups and machines for the scheduler to flag on/off
-	Version:	2
-	Update:		Reformatted and refactored the procedure
+	Version:	3
+	Update:		Changed the first query to always add new setups as active.
 */
 CREATE PROCEDURE [Scheduling].[usp_MachineCapabilitySchedulerUpdate]
 AS
@@ -28,7 +29,7 @@ AS
 			BEGIN TRAN
 				--Get setups from Setup DB
 				INSERT INTO [Scheduling].[MachineCapabilityScheduler](Setup, MachineID, ActiveScheduling)
-				SELECT K.Setup, K.Machineid, K.ActiveSetup
+				SELECT K.Setup, K.Machineid,1-- K.ActiveSetup
 				FROM [Setup].[vSetupStatus] K
 				LEFT JOIN [Scheduling].[MachineCapabilityScheduler] G  ON G.Setup = K.Setup AND g.MachineID = K.Machineid
 				WHERE g.Setup IS NULL

@@ -11,7 +11,8 @@ CREATE TABLE [Setup].[MachineNames]
 [CapacityTypeID] [int] NULL,
 [MachineRunEffeciency] [decimal] (5, 4) NULL,
 [MachineSetupEffeciency] [decimal] (5, 4) NULL,
-[ProdItemValueUUID] [uniqueidentifier] NULL
+[ProdItemValueUUID] [uniqueidentifier] NULL,
+[ManualSchedule] [bit] NULL CONSTRAINT [DF_MachineNames_ManualSchedule] DEFAULT ((0))
 ) ON [PRIMARY]
 GO
 ALTER TABLE [Setup].[MachineNames] ADD CONSTRAINT [PK_MachineNames] PRIMARY KEY CLUSTERED  ([MachineID]) ON [PRIMARY]
