@@ -20,20 +20,19 @@ CREATE FUNCTION [Setup].[fn_WhereUsed]
 returns
 @WhereUsed table
 (
-   -- Returned table layout
+   ID INTEGER  IDENTITY(1,1) NOT null,
    Component varchar(100) ,
    AssemblyItemNumber varchar(100) not null, 
    ComponentItemNumber varchar(100),
    ComponentQuantity real,
    --ExtendedQuantityPer decimal(18,10),
    [PrimaryUOM]  varchar(50) 
-   --PRIMARY KEY( AssemblyItemNumber
---)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+   ,PRIMARY KEY (ID)
 )
---ALTER TABLE @WhereUsed
---ADD CONSTRAINT [PK_tblWhereUsed] PRIMARY KEY CLUSTERED (AssemblyItemNumber ASC)
 
-as
+AS
+
+--CREATE INDEX IX_2 ON @WhereUsed (component)-- INCLUDE (assemblyitemnumber, ComponentItemNumber)
 BEGIN 
       -- add current level
    insert into @WhereUsed

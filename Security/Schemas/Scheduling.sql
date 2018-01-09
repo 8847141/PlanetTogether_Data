@@ -1,3 +1,7 @@
 CREATE SCHEMA [Scheduling]
 AUTHORIZATION [dbo]
 GO
+GRANT EXECUTE ON SCHEMA:: [Scheduling] TO [NAA\SPB_Scheduling_RO]
+GO
+GRANT EXECUTE ON SCHEMA:: [Scheduling] TO [NAA\SPB_Scheduling_RW]
+GO

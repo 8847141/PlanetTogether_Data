@@ -6,6 +6,7 @@ GO
 
 
 
+
 ---=========================================================================================
    ---                     AFL Telecommunications
    ---
@@ -126,6 +127,8 @@ BEGIN TRY
 			,TARGET.transfer_to_aps = SOURCE.transfer_to_aps
 			,TARGET.customer_number = SOURCE.customer_number
 			,TARGET.schedule_approved_date = SOURCE.schedule_approved_date
+			,TARGET.sf_group_id = SOURCE.sf_group_id
+			,TARGET.sf_fiber_set_id = SOURCE.sf_fiber_set_id
 	WHEN NOT MATCHED 
 	AND SOURCE.batch_id = @P_BATCH_ID 
 	THEN
@@ -205,6 +208,8 @@ BEGIN TRY
 			,transfer_to_aps
 			,customer_number
 			,schedule_approved_date
+			,sf_group_id
+			,sf_fiber_set_id
 			)
 		VALUES (
 			SOURCE.fiber_set_id
@@ -282,6 +287,8 @@ BEGIN TRY
 			,SOURCE.transfer_to_aps
 			,SOURCE.customer_number
 			,SOURCE.schedule_approved_date
+			,SOURCE.sf_group_id
+			,SOURCE.sf_fiber_set_id
 			);
 	--OUTPUT  $action;
 	
@@ -304,6 +311,7 @@ BEGIN CATCH
 	SELECT
 		@ReturnStatus = 'Failure'            
 END CATCH;
+
 
 
 

@@ -74,7 +74,9 @@ CREATE TABLE [dbo].[Oracle_Orders]
 [transfer_to_aps] [varchar] (10) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
 [customer_number] [varchar] (50) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
 [schedule_approved_date] [datetime] NULL,
-[fiber_set_id] [varchar] (100) COLLATE SQL_Latin1_General_CP1_CI_AS NULL
+[fiber_set_id] [varchar] (100) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+[sf_group_id] [varchar] (100) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+[sf_fiber_set_id] [varchar] (100) COLLATE SQL_Latin1_General_CP1_CI_AS NULL
 ) ON [PRIMARY]
 GO
 ALTER TABLE [dbo].[Oracle_Orders] ADD CONSTRAINT [PK_Oracle_Orders] PRIMARY KEY CLUSTERED  ([master_schedule_id]) ON [PRIMARY]
