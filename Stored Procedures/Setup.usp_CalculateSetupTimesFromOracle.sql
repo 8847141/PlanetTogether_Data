@@ -94,7 +94,8 @@ DECLARE @ErrorLine INT = ERROR_LINE();
 
 
 
-	--Insert color for each operation
+	--Insert color for each operation.
+	--Looks at color chips and compound. Color chips take precedence over compound for coloring
 	BEGIN TRY
 		BEGIN TRAN
 			;WITH cteColor
@@ -109,7 +110,7 @@ DECLARE @ErrorLine INT = ERROR_LINE();
 			SELECT DISTINCT item_number,true_operation_code,T.MachineGroupID,T.MachineID,T.AttributeNameID,attribute_value,CASE WHEN T.ValueTypeID = 5 THEN NULL ELSE TimeValue END-- , T.ValueTypeID
 			FROM cteColor T LEFT JOIN setup.AttributeMatrixFixedValue K ON K.AttributeNameID = T.AttributeNameID AND K.MachineID = T.MachineID
 			WHERE Rownumber = 1 --AND T.MachineGroupID = 4
-			ORDER BY true_operation_code
+			--ORDER BY true_operation_code
 		COMMIT TRAN
 	END TRY
 	BEGIN CATCH
@@ -125,6 +126,7 @@ DECLARE @ErrorLine INT = ERROR_LINE();
 
 
 	--Calculate aramid setup time
+	--Each end of aramid is multiplied by a time value
 	BEGIN TRY
 		BEGIN TRAN
 			;WITH cteAramid
@@ -137,7 +139,7 @@ DECLARE @ErrorLine INT = ERROR_LINE();
 				INNER JOIN dbo.Oracle_Item_Attributes A ON A.item_number = K.comp_item 
 				INNER JOIN setup.ApsSetupAttributeReference R ON R.AttributeNameID = MG.AttributeNameID AND R.OracleAttribute = A.attribute_value
 				INNER JOIN setup.vAttributeMatrixUnion MU ON MU.AttributeNameID = MG.AttributeNameID AND MU.MachineGroupID = MG.MachineGroupID and mu.MachineID = t.MachineID
-				WHERE MG.ValueTypeID = 3 and k.alternate_bom_designator = 'primary' --AND K.item_number = 'DNA-30952'
+				WHERE MG.ValueTypeID = 3 and k.alternate_bom_designator = 'primary' --AND K.item_number = 'o-ts-0151-02'
 			)
 			INSERT INTO [Setup].AttributeSetupTimeItem (Item_Number,[Setup],[MachineGroupID],MachineID,AttributeNameID,[SetupAttributeValue],[SetupTime])
 			SELECT item_number,Setup, MachineGroupID, MachineID, AttributeNameID, SUM(SetupAttributeValue) EndsOfAramid, SUM(SetupTime) SetupTime
@@ -158,6 +160,7 @@ DECLARE @ErrorLine INT = ERROR_LINE();
 
 
 	--Calculate EFL gain for SS RW 
+	--Get's EFL from the Oracle specs
 	BEGIN TRY
 		BEGIN TRAN
 			;WITH cteEFL
@@ -194,6 +197,7 @@ DECLARE @ErrorLine INT = ERROR_LINE();
 			INSERT INTO [Setup].AttributeSetupTimeItem (Item_Number,[Setup],[MachineGroupID],MachineID,AttributeNameID,[SetupAttributeValue],[SetupTime])
 			SELECT DISTINCT Item_Number,[Setup],g.[MachineGroupID],MachineID,AttributeNameID,[SetupAttributeValue],[SetupTime]
 			FROM Setup.vSetupTimes G INNER JOIN  dbo.Oracle_Routes K ON K.true_operation_code = G.Setup
+			--WHERE  AttributeNameID = 8
 		COMMIT TRAN
 	END TRY
 	BEGIN CATCH
@@ -229,13 +233,13 @@ DECLARE @ErrorLine INT = ERROR_LINE();
 		
 		BEGIN TRAN
 			INSERT INTO [Setup].AttributeSetupTimeItem (Item_Number,[Setup],[MachineGroupID],MachineID,AttributeNameID,[SetupAttributeValue],[SetupTime])
-			SELECT DISTINCT Item_Number,G.true_operation_code,I.[MachineGroupID],I.MachineID,8 AttributeNameID,FiberCount,FiberCount * TimeValue		--Calculates the TimeValue per fibercount and then inserts it for FiberSet for PT to pick up
+			SELECT DISTINCT Item_Number,G.true_operation_code,I.[MachineGroupID],I.MachineID,8 AttributeNameID,null,FiberCount * TimeValue		--Calculates the TimeValue per fibercount and then inserts it for FiberSet for PT to pick up
 			FROM Setup.ItemAttributes K INNER JOIN dbo.Oracle_Routes G ON G.item_number = K.ItemNumber 
 			INNER JOIN #MachineCapability P ON P.Setup = G.true_operation_code
 			INNER JOIN Setup.AttributeMatrixVariableValue U ON U.AttributeValue = K.FiberCount AND P.MachineID = U.MachineID
 			INNER JOIN Setup.MachineGroupAttributes Y ON Y.AttributeNameID = U.AttributeNameID 
 			INNER JOIN Setup.MachineNames I ON I.MachineGroupID = Y.MachineGroupID AND U.MachineID = I.MachineID
-			WHERE ValueTypeID = 4
+			WHERE ValueTypeID = 4 
 		COMMIT TRAN
 	END TRY
 	BEGIN CATCH	
