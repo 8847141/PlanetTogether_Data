@@ -19,7 +19,9 @@ CREATE TABLE [dbo].[Oracle_Items]
 [purchase_category] [varchar] (40) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
 [product_class] [varchar] (250) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
 [creation_date] [datetime] NULL,
-[last_update_date] [datetime] NULL
+[last_update_date] [datetime] NULL,
+[unit_weight] [float] NULL,
+[uom_code] [varchar] (25) COLLATE SQL_Latin1_General_CP1_CI_AS NULL
 ) ON [PRIMARY]
 GO
 ALTER TABLE [dbo].[Oracle_Items] ADD CONSTRAINT [PK_Oracle_Items] PRIMARY KEY CLUSTERED  ([ORG_ITEM_ID]) ON [PRIMARY]
