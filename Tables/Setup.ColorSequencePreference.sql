@@ -38,5 +38,3 @@ ALTER TABLE [Setup].[ColorSequencePreference] ADD CONSTRAINT [PK_ColorSequencePr
 GO
 CREATE UNIQUE NONCLUSTERED INDEX [IX_ColorSequencePreference] ON [Setup].[ColorSequencePreference] ([Color]) ON [PRIMARY]
 GO
-ALTER TABLE [Setup].[ColorSequencePreference] ADD CONSTRAINT [IX_ColorSequencePreference_1] UNIQUE NONCLUSTERED  ([PreferedSequence]) ON [PRIMARY]
-GO

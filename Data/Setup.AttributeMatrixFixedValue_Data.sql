@@ -1,3 +1,5 @@
+INSERT INTO [Setup].[AttributeMatrixFixedValue] ([AttributeNameID], [MachineID], [TimeValue], [Cost], [CreatedBy], [DateCreated], [Adder]) VALUES (2, 7, 35, NULL, N'NAA\eddybc', '2018-02-02 11:14:49.787', 0)
+INSERT INTO [Setup].[AttributeMatrixFixedValue] ([AttributeNameID], [MachineID], [TimeValue], [Cost], [CreatedBy], [DateCreated], [Adder]) VALUES (2, 8, 35, NULL, N'NAA\eddybc', '2018-02-02 11:14:54.977', 0)
 INSERT INTO [Setup].[AttributeMatrixFixedValue] ([AttributeNameID], [MachineID], [TimeValue], [Cost], [CreatedBy], [DateCreated], [Adder]) VALUES (2, 3, 20, NULL, N'NAA\eddybc', '2017-08-04 16:24:09.743', 0)
 INSERT INTO [Setup].[AttributeMatrixFixedValue] ([AttributeNameID], [MachineID], [TimeValue], [Cost], [CreatedBy], [DateCreated], [Adder]) VALUES (2, 4, 10, NULL, N'NAA\eddybc', '2017-08-07 09:04:32.010', 0)
 INSERT INTO [Setup].[AttributeMatrixFixedValue] ([AttributeNameID], [MachineID], [TimeValue], [Cost], [CreatedBy], [DateCreated], [Adder]) VALUES (2, 5, 10, NULL, N'NAA\eddybc', '2017-08-07 09:04:32.120', 0)

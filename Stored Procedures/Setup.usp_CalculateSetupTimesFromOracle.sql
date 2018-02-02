@@ -5,12 +5,13 @@ GO
 
 
 
+
 -- =============================================
 -- Author:      Bryan Eddy
 -- Create date: 8/14/2017
 -- Description: Procedure pulls data from various Oracle points to calculate item setup times
--- Version:		5
--- Update:		Updated QC base setup time to pull from ItemFiberCountByOperation
+-- Version:		6
+-- Update:		Added insert to get DJ items missing from the setup data
 -- =============================================
 
 CREATE PROCEDURE [Setup].[usp_CalculateSetupTimesFromOracle]
@@ -336,6 +337,36 @@ DECLARE @ErrorLine INT = ERROR_LINE();
 		ROLLBACK TRANSACTION;
  
  
+		PRINT 'Actual error number: ' + CAST(@ErrorNumber AS VARCHAR(10));
+		PRINT 'Actual line number: ' + CAST(@ErrorLine AS VARCHAR(10));
+ 
+		THROW;
+	END CATCH;
+
+
+			--Insert setup information for all DJ's with setup that is not located on the std op
+	BEGIN TRY
+		BEGIN TRAN
+			;WITH cteSetups --Get setup information for all Routing DJs
+			AS(
+				SELECT DISTINCT Item_Number,[Setup],[MachineGroupID],MachineID,AttributeNameID,[SetupAttributeValue],[SetupTime]
+						FROM setup.AttributeSetupTimeItem K INNER JOIN dbo.Oracle_DJ_Routes B ON K.Setup = b.true_operation_code
+				),
+			cteMissingSetupItems --GEt which DJ items are missing from the setup data
+				as(
+				SELECT R.assembly_item, R.true_operation_code 
+				FROM dbo.Oracle_DJ_Routes R LEFT JOIN  Setup.AttributeSetupTimeItem S ON R.assembly_item = S.Item_Number
+				WHERE S.Item_Number IS NULL AND R.send_to_aps <> 'N'
+				)
+			INSERT INTO setup.AttributeSetupTimeItem ([Setup],[MachineGroupID],MachineID,AttributeNameID,[SetupAttributeValue],[SetupTime])
+			SELECT DISTINCT [Setup],[MachineGroupID],MachineID,AttributeNameID,[SetupAttributeValue],[SetupTime]
+			FROM cteMissingSetupItems K INNER JOIN cteSetups S ON S.Item_Number = K.assembly_item AND S.Setup = K.true_operation_code
+		COMMIT TRAN
+	END TRY
+	BEGIN CATCH
+		IF @@TRANCOUNT > 0
+		ROLLBACK TRANSACTION;
+
 		PRINT 'Actual error number: ' + CAST(@ErrorNumber AS VARCHAR(10));
 		PRINT 'Actual line number: ' + CAST(@ErrorLine AS VARCHAR(10));
  
