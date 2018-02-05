@@ -54,8 +54,6 @@ BEGIN
 
 	SELECT @numRows = COUNT(*) FROM #Results
 
-
-
 	--SET @ReceipientList = (STUFF((SELECT ';' + UserEmail 
 	--						FROM tblConfiguratorUser G  INNER JOIN users.UserResponsibility  K ON  G.UserID = K.UserID
 	--  						WHERE K.ResponsibilityID = 5 FOR XML PATH('')),1,1,''))
@@ -98,7 +96,7 @@ BEGIN
 					--	N'</table>' ;
 		
 					EXEC msdb.dbo.sp_send_dbmail 
-					@recipients='Jeff.Gilfillan@aflglobal.com',
+					@recipients='Jeff.Gilfillan@aflglobal.com; Rich.DiDonato@aflglobal.com',
 					--@recipients='Bryan.Eddy@aflglobal.com',
 					@blind_copy_recipients = 'Bryan.Eddy@aflglobal.com',
 					@subject = @subject,

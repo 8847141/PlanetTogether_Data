@@ -45,6 +45,7 @@ INSERT INTO [Setup].[MachineReference] ([MachineID], [PssMachineID], [PssProcess
 INSERT INTO [Setup].[MachineReference] ([MachineID], [PssMachineID], [PssProcessID], [MachineReferenceID]) VALUES (43, 11, 510, 241)
 INSERT INTO [Setup].[MachineReference] ([MachineID], [PssMachineID], [PssProcessID], [MachineReferenceID]) VALUES (44, 18, 510, 242)
 INSERT INTO [Setup].[MachineReference] ([MachineID], [PssMachineID], [PssProcessID], [MachineReferenceID]) VALUES (45, 8, 615, 246)
+INSERT INTO [Setup].[MachineReference] ([MachineID], [PssMachineID], [PssProcessID], [MachineReferenceID]) VALUES (47, 10, 620, 284)
 INSERT INTO [Setup].[MachineReference] ([MachineID], [PssMachineID], [PssProcessID], [MachineReferenceID]) VALUES (48, 3, 850, 263)
 INSERT INTO [Setup].[MachineReference] ([MachineID], [PssMachineID], [PssProcessID], [MachineReferenceID]) VALUES (48, 3, 855, 265)
 INSERT INTO [Setup].[MachineReference] ([MachineID], [PssMachineID], [PssProcessID], [MachineReferenceID]) VALUES (50, 1, 523, 243)
