@@ -54,3 +54,5 @@ CREATE TABLE [dbo].[Oracle_DJ_Routes]
 GO
 ALTER TABLE [dbo].[Oracle_DJ_Routes] ADD CONSTRAINT [PK_Oracle_DJ_Routes] PRIMARY KEY CLUSTERED  ([unique_id]) ON [PRIMARY]
 GO
+CREATE NONCLUSTERED INDEX [IX_Oracle_DJ_Routes] ON [dbo].[Oracle_DJ_Routes] ([true_operation_code], [assembly_item]) ON [PRIMARY]
+GO

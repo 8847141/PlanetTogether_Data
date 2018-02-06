@@ -45,3 +45,5 @@ END
 GO
 ALTER TABLE [Setup].[ItemFiberCountByOperation] ADD CONSTRAINT [PK_ItemFiberCountByOperation] PRIMARY KEY CLUSTERED  ([ItemNumber], [TrueOperationCode], [PrimaryAlternate]) ON [PRIMARY]
 GO
+CREATE NONCLUSTERED INDEX [ItemFiberCountByOperation_XI] ON [Setup].[ItemFiberCountByOperation] ([FiberCount]) INCLUDE ([ItemNumber], [TrueOperationCode]) ON [PRIMARY]
+GO

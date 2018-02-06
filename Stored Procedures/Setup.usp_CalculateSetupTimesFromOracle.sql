@@ -6,12 +6,16 @@ GO
 
 
 
+
+
+
 -- =============================================
 -- Author:      Bryan Eddy
 -- Create date: 8/14/2017
 -- Description: Procedure pulls data from various Oracle points to calculate item setup times
--- Version:		6
--- Update:		Added insert to get DJ items missing from the setup data
+-- Version:		7
+-- Update:		Added Routes and BOM union views to combine the DJ and Std BOM/Route for each item
+--				Split procedure for calculating value type 7 into a temp table then inserting into finished table
 -- =============================================
 
 CREATE PROCEDURE [Setup].[usp_CalculateSetupTimesFromOracle]
@@ -34,7 +38,7 @@ DECLARE @ErrorLine INT = ERROR_LINE();
 	as(
 		SELECT DISTINCT k.item_number,true_operation_code,U.MachineGroupID,M.MachineID,R.AttributeNameID,G.comp_item, attribute_name, attribute_value, o.inventory_item_status_code, ValueTypeID
 		--,COUNT(comp_item) OVER (PARTITION BY true_operation_code, comp_item) CountOfComponent
-		FROM dbo.Oracle_Routes K INNER JOIN DBO.Oracle_BOMs G ON G.item_number = K.item_number AND G.opseq = K.operation_seq_num
+		FROM Setup.vRoutesUnion K INNER JOIN [Setup].vBomUnion G ON G.item_number = K.item_number AND G.opseq = K.operation_seq_num
 		INNER JOIN Oracle_Item_Attributes P ON P.item_number = G.comp_item
 		INNER JOIN setup.vMachineCapability M ON M.Setup = K.true_operation_code
 		INNER JOIN setup.ApsSetupAttributeReference R ON R.OracleAttribute = P.attribute_name
@@ -135,8 +139,8 @@ DECLARE @ErrorLine INT = ERROR_LINE();
 				SELECT K.item_number,[Setup],MG.[MachineGroupID],M.MachineID,MG.AttributeNameID,CAST(count_per_uom AS INT) SetupAttributeValue,TimeValue * cast(count_per_uom as int) + COALESCE(Adder,0) as SetupTime--, MG.ValueTypeID
 				FROM setup.MachineGroupAttributes MG INNER JOIN setup.MachineNames M ON M.MachineGroupID = MG.MachineGroupID
 				INNER JOIN setup.vMachineCapability T ON T.MachineID = M.MachineID
-				INNER JOIN dbo.Oracle_Routes G ON G.true_operation_code = T.Setup
-				INNER JOIN dbo.Oracle_BOMs K ON K.item_number = G.item_number AND K.opseq = G.operation_seq_num AND G.alternate_routing_designator = K.alternate_bom_designator
+				INNER JOIN Setup.vRoutesUnion G ON G.true_operation_code = T.Setup
+				INNER JOIN [Setup].vBomUnion K ON K.item_number = G.item_number AND K.opseq = G.operation_seq_num AND G.alternate_routing_designator = K.alternate_bom_designator
 				INNER JOIN dbo.Oracle_Item_Attributes A ON A.item_number = K.comp_item 
 				INNER JOIN setup.ApsSetupAttributeReference R ON R.AttributeNameID = MG.AttributeNameID AND R.OracleAttribute = A.attribute_value
 				INNER JOIN setup.vAttributeMatrixUnion MU ON MU.AttributeNameID = MG.AttributeNameID AND MU.MachineGroupID = MG.MachineGroupID and mu.MachineID = t.MachineID
@@ -170,7 +174,7 @@ DECLARE @ErrorLine INT = ERROR_LINE();
 			,ROW_NUMBER() OVER (PARTITION BY a.itemnumber,[Setup],MG.[MachineGroupID],M.MachineID,MG.AttributeNameID ORDER BY  a.itemnumber) RowNumber
 			FROM setup.MachineGroupAttributes MG INNER JOIN setup.MachineNames M ON M.MachineGroupID = MG.MachineGroupID
 				INNER JOIN setup.vMachineCapability T ON T.MachineID = M.MachineID
-				INNER JOIN dbo.Oracle_Routes G ON G.true_operation_code = T.Setup
+				INNER JOIN Setup.vRoutesUnion G ON G.true_operation_code = T.Setup
 				INNER JOIN [NAASPB-PRD04\SQL2014].Premise.dbo.AFLPRD_INVSysItemSpec_CAB A ON a.itemnumber = g.item_number 
 				INNER JOIN setup.ApsSetupAttributeReference R ON R.AttributeNameID = MG.AttributeNameID AND A.SpecificationElement = r.OracleAttribute
 				INNER JOIN setup.vAttributeMatrixUnion MU ON MU.AttributeNameID = MG.AttributeNameID AND MU.MachineGroupID = MG.MachineGroupID AND mu.MachineID = t.MachineID AND MG.ValueTypeID = MU.ValueTypeID
@@ -197,7 +201,7 @@ DECLARE @ErrorLine INT = ERROR_LINE();
 		BEGIN TRAN
 			INSERT INTO [Setup].AttributeSetupTimeItem (Item_Number,[Setup],[MachineGroupID],MachineID,AttributeNameID,[SetupAttributeValue],[SetupTime])
 			SELECT DISTINCT Item_Number,[Setup],g.[MachineGroupID],MachineID,AttributeNameID,[SetupAttributeValue],[SetupTime]
-			FROM Setup.vSetupTimes G INNER JOIN  dbo.Oracle_Routes K ON K.true_operation_code = G.Setup
+			FROM Setup.vSetupTimes G INNER JOIN  Setup.vRoutesUnion K ON K.true_operation_code = G.Setup
 			--WHERE  AttributeNameID = 8
 		COMMIT TRAN
 	END TRY
@@ -235,7 +239,7 @@ DECLARE @ErrorLine INT = ERROR_LINE();
 		BEGIN TRAN
 			INSERT INTO [Setup].AttributeSetupTimeItem (Item_Number,[Setup],[MachineGroupID],MachineID,AttributeNameID,[SetupAttributeValue],[SetupTime])
 			SELECT DISTINCT Item_Number,G.true_operation_code,I.[MachineGroupID],I.MachineID,8 AttributeNameID,null,FiberCount * TimeValue		--Calculates the TimeValue per fibercount and then inserts it for FiberSet for PT to pick up
-			FROM Setup.ItemAttributes K INNER JOIN dbo.Oracle_Routes G ON G.item_number = K.ItemNumber 
+			FROM Setup.ItemAttributes K INNER JOIN Setup.vRoutesUnion G ON G.item_number = K.ItemNumber 
 			INNER JOIN #MachineCapability P ON P.Setup = G.true_operation_code
 			INNER JOIN Setup.AttributeMatrixVariableValue U ON U.AttributeValue = K.FiberCount AND P.MachineID = U.MachineID
 			INNER JOIN Setup.MachineGroupAttributes Y ON Y.AttributeNameID = U.AttributeNameID 
@@ -254,15 +258,24 @@ DECLARE @ErrorLine INT = ERROR_LINE();
 
 
 	--Insert fibercount based setup time based on the fiber count Value Type 7 (fixed value chosen that is dependent on the fiber count) for QC operations
+	/***************Using the most time to complete.  Roughly 10 minutes***************************/
 	BEGIN TRY
 		BEGIN TRAN
-			INSERT INTO [Setup].AttributeSetupTimeItem (Item_Number,[Setup],[MachineGroupID],MachineID,AttributeNameID,[SetupAttributeValue],[SetupTime])
+
+			IF OBJECT_ID(N'tempdb..#FiberCount', N'U') IS NOT NULL
+			DROP TABLE #FiberCount;
 			SELECT DISTINCT Item_Number,operation_code,[MachineGroupID],p.MachineID AS MachineID,u.AttributeNameID,FiberCount,TimeValue
-			FROM setup.ItemFiberCountByOperation K INNER JOIN dbo.Oracle_Routes G ON G.item_number = K.ItemNumber AND K.TrueOperationCode = G.true_operation_code
+			INTO #FiberCount
+			FROM setup.ItemFiberCountByOperation K INNER JOIN Setup.vRoutesUnion G ON G.item_number = K.ItemNumber AND K.TrueOperationCode = G.true_operation_code
 			INNER JOIN Setup.DepartmentIndicator P ON p.department_code = g.department_code
 			INNER JOIN Setup.AttributeMatrixVariableValue U ON U.AttributeValue = K.FiberCount AND P.MachineID = U.MachineID
 			INNER JOIN Setup.vMachineAttributes Y ON Y.MachineID = P.MachineID AND Y.AttributeNameID = U.AttributeNameID 
 			WHERE ValueTypeID = 7 AND pass_to_aps NOT IN ('d','N') --AND K.ItemNumber = 'DNS-OSP-0063'
+
+			INSERT INTO [Setup].AttributeSetupTimeItem (Item_Number,[Setup],[MachineGroupID],MachineID,AttributeNameID,[SetupAttributeValue],[SetupTime])
+			SELECT DISTINCT Item_Number,operation_code,[MachineGroupID],MachineID AS MachineID,AttributeNameID,FiberCount,TimeValue
+			FROM #FiberCount
+
 		COMMIT TRAN
 	END TRY
 	BEGIN CATCH
@@ -303,7 +316,7 @@ DECLARE @ErrorLine INT = ERROR_LINE();
 		BEGIN TRAN
 			INSERT INTO [Setup].AttributeSetupTimeItem (Item_Number,[Setup],[MachineGroupID],AttributeSetupTimeItem.MachineID,AttributeNameID,[SetupAttributeValue],[SetupTime])
 			SELECT DISTINCT G.item_number,I.Setup,[MachineGroupID],I.MachineID,u.AttributeNameID,(CASE WHEN G.item_description LIKE '%-[WB]/S%' THEN '1' ELSE '0' END), NULL--, K.product_class
-			FROM dbo.Oracle_Items K INNER JOIN dbo.Oracle_Routes G ON G.item_number = K.item_number
+			FROM dbo.Oracle_Items K INNER JOIN Setup.vRoutesUnion G ON G.item_number = K.item_number
 			INNER JOIN SETUP.vMachineCapability I ON I.SETUP = G.true_operation_code
 			INNER JOIN Setup.AttributeMatrixFromTo U ON I.MachineID = U.MachineID
 			INNER JOIN Setup.vMachineAttributes Y ON Y.MachineID = I.MachineID AND Y.AttributeNameID = U.AttributeNameID 
@@ -353,7 +366,7 @@ DECLARE @ErrorLine INT = ERROR_LINE();
 						FROM setup.AttributeSetupTimeItem K INNER JOIN dbo.Oracle_DJ_Routes B ON K.Setup = b.true_operation_code
 				),
 			cteMissingSetupItems --GEt which DJ items are missing from the setup data
-				as(
+				AS(
 				SELECT R.assembly_item, R.true_operation_code 
 				FROM dbo.Oracle_DJ_Routes R LEFT JOIN  Setup.AttributeSetupTimeItem S ON R.assembly_item = S.Item_Number
 				WHERE S.Item_Number IS NULL AND R.send_to_aps <> 'N'

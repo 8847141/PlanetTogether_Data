@@ -28,8 +28,6 @@ CREATE NONCLUSTERED INDEX [IX_Oracle_Routes] ON [dbo].[Oracle_Routes] ([item_num
 GO
 CREATE NONCLUSTERED INDEX [IIX_Oracle_Routes] ON [dbo].[Oracle_Routes] ([pass_to_aps]) INCLUDE ([alternate_routing_designator], [item_number], [operation_code], [operation_seq_num], [Unique_ID]) ON [PRIMARY]
 GO
-CREATE NONCLUSTERED INDEX [IX_Route] ON [dbo].[Oracle_Routes] ([pass_to_aps]) INCLUDE ([department_code], [item_number], [operation_code]) ON [PRIMARY]
-GO
 CREATE NONCLUSTERED INDEX [IX_Oracle_Routes_1] ON [dbo].[Oracle_Routes] ([true_operation_code], [item_number], [operation_seq_num]) ON [PRIMARY]
 GO
 CREATE NONCLUSTERED INDEX [Oracle_Routes_IXX] ON [dbo].[Oracle_Routes] ([true_operation_seq_num]) INCLUDE ([alternate_routing_designator], [department_code], [item_number], [true_operation_code]) ON [PRIMARY]
