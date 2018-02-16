@@ -77,7 +77,9 @@ CREATE TABLE [dbo].[Oracle_Orders_stg_bkp]
 [customer_number] [varchar] (50) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
 [schedule_approved_date] [datetime] NULL,
 [sf_group_id] [varchar] (100) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
-[sf_fiber_set_id] [varchar] (100) COLLATE SQL_Latin1_General_CP1_CI_AS NULL
+[sf_fiber_set_id] [varchar] (100) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+[pri_uom_shipped_qty] [float] NULL,
+[pri_uom_open_qty] [float] NULL
 ) ON [PRIMARY]
 GO
 CREATE NONCLUSTERED INDEX [OracleOrders_stg_bkp_IN1] ON [dbo].[Oracle_Orders_stg_bkp] ([batch_id]) ON [PRIMARY]

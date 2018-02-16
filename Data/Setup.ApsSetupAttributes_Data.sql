@@ -1,5 +1,5 @@
 SET IDENTITY_INSERT [Setup].[ApsSetupAttributes] ON
-INSERT INTO [Setup].[ApsSetupAttributes] ([AttributeNameID], [AttributeName], [CreatedBy], [DateCreated]) VALUES (38, N'ColorSequence', N'NAA\eddybc', '2017-12-07 15:49:44.257')
+INSERT INTO [Setup].[ApsSetupAttributes] ([AttributeNameID], [AttributeName], [CreatedBy], [DateCreated]) VALUES (39, N'Tooling', N'NAA\eddybc', '2018-02-14 15:20:41.120')
 SET IDENTITY_INSERT [Setup].[ApsSetupAttributes] OFF
 SET IDENTITY_INSERT [Setup].[ApsSetupAttributes] ON
 INSERT INTO [Setup].[ApsSetupAttributes] ([AttributeNameID], [AttributeName], [CreatedBy], [DateCreated]) VALUES (1, N'Armor', N'NAA\eddybc', '2017-08-01 13:12:09.630')
@@ -26,4 +26,5 @@ INSERT INTO [Setup].[ApsSetupAttributes] ([AttributeNameID], [AttributeName], [C
 INSERT INTO [Setup].[ApsSetupAttributes] ([AttributeNameID], [AttributeName], [CreatedBy], [DateCreated]) VALUES (35, N'ChildCount', N'NAA\eddybc', '2017-08-08 08:16:13.217')
 INSERT INTO [Setup].[ApsSetupAttributes] ([AttributeNameID], [AttributeName], [CreatedBy], [DateCreated]) VALUES (36, N'DesignType', N'NAA\eddybc', '2017-08-10 15:55:03.807')
 INSERT INTO [Setup].[ApsSetupAttributes] ([AttributeNameID], [AttributeName], [CreatedBy], [DateCreated]) VALUES (37, N'Print', N'NAA\eddybc', '2017-11-06 11:12:03.307')
+INSERT INTO [Setup].[ApsSetupAttributes] ([AttributeNameID], [AttributeName], [CreatedBy], [DateCreated]) VALUES (38, N'ColorSequence', N'NAA\eddybc', '2017-12-07 15:49:44.257')
 SET IDENTITY_INSERT [Setup].[ApsSetupAttributes] OFF

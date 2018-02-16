@@ -11,12 +11,13 @@ GO
 
 
 
+
 -- =============================================
 -- Author:      Bryan Eddy
 -- Create date: 8/11/2017
 -- Description: Create setup times for all attributes from Setup DB
--- Version: 2
--- Update: Added table truncate statement to clear table prior to the inserting statements 
+-- Version: 3
+-- Update: Updated glue attribute and logic to identify "ON" as 1 and "OFF" or null as 0.
 -- =============================================
 
 CREATE PROCEDURE [Setup].[usp_CalculateSetupTimesFromSetupDB]
@@ -134,8 +135,8 @@ DECLARE @ErrorLine INT = ERROR_LINE();
 		BEGIN TRAN
 			INSERT INTO [Setup].AttributeSetupTime ([Setup],[MachineGroupID],MachineID,AttributeNameID,[SetupAttributeValue],[SetupTime])
 			SELECT DISTINCT SetupNumber, G.MachineGroupID,MachineID, G.AttributeNameID,
-			CASE WHEN G.AttributeNameID = 34 AND COALESCE(AttributeValue,'0') <> '0' THEN '1'
-				 ELSE COALESCE(AttributeValue,'0') END , NULL
+			CASE WHEN G.AttributeNameID = 34 AND G.AttributeValue = 'ON' THEN '1'
+				 ELSE '0' END , NULL
 			  FROM [Setup].[vMachineSetupAttributesNulls] G
 			WHERE G.ValueTypeID = 5 AND  G.AttributeNameID = 34
 		COMMIT TRAN

@@ -7,6 +7,7 @@ GO
 
 
 
+
 /* 
 	Author:			Bryan Eddy
 	Date:			7/7/2017	
@@ -25,7 +26,7 @@ CREATE VIEW [Setup].[vSetupLineSpeed]
  AS(
 
 	 SELECT K.SetupNumber,AttributeValue AS LineSpeed, k.SetupDesc, I.MachineID,
-	ROW_NUMBER() OVER (PARTITION BY K.SetupNumber,I.MachineID ORDER BY K.SetupNumber,I.MachineID,AttributeValue  ASC ) AS RowNumber, 2
+	ROW_NUMBER() OVER (PARTITION BY K.SetupNumber,I.MachineID ORDER BY K.SetupNumber,I.MachineID,AttributeValue  DESC ) AS RowNumber, 2
 	 FROM  Setup.vInterfaceSetupLineSpeed k INNER JOIN SETUP.MachineReference I ON I.PssMachineID = K.PssMachineID AND i.PssProcessID = k.PssProcessID
 	 WHERE ISNUMERIC(AttributeValue) = 1 AND k.SetupNumber NOT IN ('CH01','CH02')
 	 UNION

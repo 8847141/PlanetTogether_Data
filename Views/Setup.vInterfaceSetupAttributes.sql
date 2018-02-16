@@ -14,6 +14,7 @@ GO
 
 
 
+
 /*Interface view of needed information from the Recipe Management Syste / PSS DB*/
 CREATE VIEW [Setup].[vInterfaceSetupAttributes]
 AS
@@ -23,7 +24,7 @@ SELECT        Setup.tblProcessMachines.ProcessID,
                          Setup.tblSetupAttributes.EffectiveDate, Setup.tblAttributes.AttrEffectiveDate, Setup.tblAttributes.AttributeGroupID, Setup.tblSetup.IneffectiveDate, 
                          Setup.tblAttributes.AttributeUOM, Setup.tblAttributes.AttrIneffectiveDate AS AttributeIneffectiveDate, 
                          Setup.tblSetupAttributes.IneffectiveDate AS SetupAttributesIneffectiveDate, Setup.tblProcessMachines.MachineNumber, tblProcessMachines.MachineID AS PssMachineID
-						 ,tblProcessMachines.ProcessID AS PssProcessID, ToleranceReq, ToleranceUOM, ToleranceType,DefaultMinTol, DefaultMaxTol, DefaultMinValueTol, DefaultMaxValueTol
+						 ,tblProcessMachines.ProcessID AS PssProcessID
 FROM            Setup.tblAttributes INNER JOIN
                          Setup.tblSetupAttributes ON Setup.tblAttributes.AttributeID = Setup.tblSetupAttributes.AttributeID INNER JOIN
                          Setup.tblSetup ON Setup.tblSetupAttributes.SetupID = Setup.tblSetup.SetupID AND Setup.tblSetupAttributes.MachineID = Setup.tblSetup.MachineID INNER JOIN

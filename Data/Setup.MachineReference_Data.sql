@@ -1,4 +1,7 @@
 SET IDENTITY_INSERT [Setup].[MachineReference] ON
+INSERT INTO [Setup].[MachineReference] ([MachineID], [PssMachineID], [PssProcessID], [MachineReferenceID]) VALUES (15, 3, 800, 260)
+SET IDENTITY_INSERT [Setup].[MachineReference] OFF
+SET IDENTITY_INSERT [Setup].[MachineReference] ON
 INSERT INTO [Setup].[MachineReference] ([MachineID], [PssMachineID], [PssProcessID], [MachineReferenceID]) VALUES (1, 1, 1000, 273)
 INSERT INTO [Setup].[MachineReference] ([MachineID], [PssMachineID], [PssProcessID], [MachineReferenceID]) VALUES (1, 2, 1000, 280)
 INSERT INTO [Setup].[MachineReference] ([MachineID], [PssMachineID], [PssProcessID], [MachineReferenceID]) VALUES (1, 3, 1000, 281)
@@ -15,7 +18,6 @@ INSERT INTO [Setup].[MachineReference] ([MachineID], [PssMachineID], [PssProcess
 INSERT INTO [Setup].[MachineReference] ([MachineID], [PssMachineID], [PssProcessID], [MachineReferenceID]) VALUES (12, 2, 850, 262)
 INSERT INTO [Setup].[MachineReference] ([MachineID], [PssMachineID], [PssProcessID], [MachineReferenceID]) VALUES (13, 4, 850, 264)
 INSERT INTO [Setup].[MachineReference] ([MachineID], [PssMachineID], [PssProcessID], [MachineReferenceID]) VALUES (14, 2, 600, 245)
-INSERT INTO [Setup].[MachineReference] ([MachineID], [PssMachineID], [PssProcessID], [MachineReferenceID]) VALUES (15, 1, 825, 260)
 INSERT INTO [Setup].[MachineReference] ([MachineID], [PssMachineID], [PssProcessID], [MachineReferenceID]) VALUES (16, 1, 800, 258)
 INSERT INTO [Setup].[MachineReference] ([MachineID], [PssMachineID], [PssProcessID], [MachineReferenceID]) VALUES (17, 2, 800, 259)
 INSERT INTO [Setup].[MachineReference] ([MachineID], [PssMachineID], [PssProcessID], [MachineReferenceID]) VALUES (20, 7, 710, 254)

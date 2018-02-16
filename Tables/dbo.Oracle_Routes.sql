@@ -26,6 +26,8 @@ ALTER TABLE [dbo].[Oracle_Routes] ADD CONSTRAINT [PK_Oracle_Routes] PRIMARY KEY 
 GO
 CREATE NONCLUSTERED INDEX [IX_Oracle_Routes] ON [dbo].[Oracle_Routes] ([item_number], [alternate_routing_designator], [operation_seq_num], [setup_item]) ON [PRIMARY]
 GO
+CREATE NONCLUSTERED INDEX [IX_Oracle_Routes_2] ON [dbo].[Oracle_Routes] ([item_number], [true_operation_code], [department_code]) ON [PRIMARY]
+GO
 CREATE NONCLUSTERED INDEX [IIX_Oracle_Routes] ON [dbo].[Oracle_Routes] ([pass_to_aps]) INCLUDE ([alternate_routing_designator], [item_number], [operation_code], [operation_seq_num], [Unique_ID]) ON [PRIMARY]
 GO
 CREATE NONCLUSTERED INDEX [IX_Oracle_Routes_1] ON [dbo].[Oracle_Routes] ([true_operation_code], [item_number], [operation_seq_num]) ON [PRIMARY]

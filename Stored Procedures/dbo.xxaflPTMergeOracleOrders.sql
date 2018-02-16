@@ -7,6 +7,7 @@ GO
 
 
 
+
 ---=========================================================================================
    ---                     AFL Telecommunications
    ---
@@ -129,6 +130,8 @@ BEGIN TRY
 			,TARGET.schedule_approved_date = SOURCE.schedule_approved_date
 			,TARGET.sf_group_id = SOURCE.sf_group_id
 			,TARGET.sf_fiber_set_id = SOURCE.sf_fiber_set_id
+			,TARGET.pri_uom_shipped_qty = SOURCE.pri_uom_shipped_qty
+			,TARGET.pri_uom_open_qty = SOURCE.pri_uom_open_qty
 	WHEN NOT MATCHED 
 	AND SOURCE.batch_id = @P_BATCH_ID 
 	THEN
@@ -210,6 +213,8 @@ BEGIN TRY
 			,schedule_approved_date
 			,sf_group_id
 			,sf_fiber_set_id
+		    ,pri_uom_shipped_qty
+			,pri_uom_open_qty
 			)
 		VALUES (
 			SOURCE.fiber_set_id
@@ -289,6 +294,8 @@ BEGIN TRY
 			,SOURCE.schedule_approved_date
 			,SOURCE.sf_group_id
 			,SOURCE.sf_fiber_set_id
+			,SOURCE.pri_uom_shipped_qty
+			,SOURCE.pri_uom_open_qty
 			);
 	--OUTPUT  $action;
 	
@@ -311,6 +318,7 @@ BEGIN CATCH
 	SELECT
 		@ReturnStatus = 'Failure'            
 END CATCH;
+
 
 
 
