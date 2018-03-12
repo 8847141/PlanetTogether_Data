@@ -58,6 +58,7 @@ CREATE TABLE [dbo].[Oracle_USAC_PO_SO]
 [inv_weight_uom] [varchar] (3) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
 [inv_product_category] [varchar] (245) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
 [creation_date] [datetime] NULL,
-[last_update_date] [datetime] NULL
+[last_update_date] [datetime] NULL,
+[UNIQUE_ID] [varchar] (50) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL
 ) ON [PRIMARY]
 GO

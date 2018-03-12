@@ -1,0 +1,6 @@
+INSERT INTO [dbo].[APS_PriorityValues_HardCoded] ([ID], [priority_type], [schedule_approved], [priority_number]) VALUES ('78381f60-51f7-4af8-8ea2-3ff471d480c0', NULL, N'Y', 2)
+INSERT INTO [dbo].[APS_PriorityValues_HardCoded] ([ID], [priority_type], [schedule_approved], [priority_number]) VALUES ('ef40c979-54cb-4e8c-9699-501dbc3b897e', N'D', NULL, 1)
+INSERT INTO [dbo].[APS_PriorityValues_HardCoded] ([ID], [priority_type], [schedule_approved], [priority_number]) VALUES ('6dc69a24-aaec-47dc-bbd7-5c6027ca7dc3', N'T', NULL, 999)
+INSERT INTO [dbo].[APS_PriorityValues_HardCoded] ([ID], [priority_type], [schedule_approved], [priority_number]) VALUES ('7170e60b-87b9-40ef-9142-7dd2659b0cac', NULL, N'Forecast', 4)
+INSERT INTO [dbo].[APS_PriorityValues_HardCoded] ([ID], [priority_type], [schedule_approved], [priority_number]) VALUES ('c843a6b5-59ce-4876-a0e8-afc0304f0814', NULL, N'N', 3)
+INSERT INTO [dbo].[APS_PriorityValues_HardCoded] ([ID], [priority_type], [schedule_approved], [priority_number]) VALUES ('7d8b6b4a-f3f6-49ed-acea-fc59752f494e', N'P', NULL, 900)

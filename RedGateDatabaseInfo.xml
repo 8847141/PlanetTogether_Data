@@ -57,7 +57,7 @@
     <DataWriteAllFilesInOneDirectory>True</DataWriteAllFilesInOneDirectory>
   </WriteToFileOptions>
   <DataFileSet>
-    <Count>19</Count>
+    <Count>26</Count>
     <DataFile>Scheduling.OperationRunType_Data.sql</DataFile>
     <DataFile>Setup.ApsSetupAttributes_Data.sql</DataFile>
     <DataFile>Setup.ApsSetupAttributeSource_Data.sql</DataFile>
@@ -77,5 +77,12 @@
     <DataFile>Setup.ColorSequencePreference_Data.sql</DataFile>
     <DataFile>dbo.APS_ProductClass_ToExclude_HardCoded_Data.sql</DataFile>
     <DataFile>Setup.MachineReference_Data.sql</DataFile>
+    <DataFile>dbo.APS_BobbinAssignment_HardCoded_Data.sql</DataFile>
+    <DataFile>dbo.APS_BuffersAndWindows_HardCoded_Data.sql</DataFile>
+    <DataFile>dbo.APS_Calendar_HardCoded_Data.sql</DataFile>
+    <DataFile>dbo.APS_ColorLookup_HardCoded_Data.sql</DataFile>
+    <DataFile>dbo.APS_PriorityValues_HardCoded_Data.sql</DataFile>
+    <DataFile>dbo.APS_ProductLeadTimes_HardCoded_Data.sql</DataFile>
+    <DataFile>dbo.APS_Resources_QC_HardCoded_Data.sql</DataFile>
   </DataFileSet>
 </DatabaseInformation>

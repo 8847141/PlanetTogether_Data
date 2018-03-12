@@ -21,7 +21,18 @@ CREATE TABLE [dbo].[Oracle_Items]
 [creation_date] [datetime] NULL,
 [last_update_date] [datetime] NULL,
 [unit_weight] [float] NULL,
-[uom_code] [varchar] (25) COLLATE SQL_Latin1_General_CP1_CI_AS NULL
+[uom_code] [varchar] (25) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+[standard_cost] [float] NULL,
+[drawing_number] [varchar] (255) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+[supplier] [varchar] (240) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+[market_price] [float] NULL,
+[list_price] [float] NULL,
+[buyer] [varchar] (240) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+[fixed_lot_multiplier] [float] NULL,
+[fixed_order_qty] [float] NULL,
+[min_order_qty] [float] NULL,
+[po_date] [datetime] NULL,
+[po_receipt_date] [datetime] NULL
 ) ON [PRIMARY]
 GO
 ALTER TABLE [dbo].[Oracle_Items] ADD CONSTRAINT [PK_Oracle_Items] PRIMARY KEY CLUSTERED  ([ORG_ITEM_ID]) ON [PRIMARY]
