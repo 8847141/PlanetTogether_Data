@@ -6,6 +6,8 @@ GO
 
 
 
+
+
 /*
 -- =============================================
 -- Author:      Bryan Eddy
@@ -78,7 +80,7 @@ BEGIN
 				DROP TABLE #FiberCount;
 				;WITH cteFiber
 				AS(
-					SELECT FinishedGood,p.comp_item, part, position ,make_buy, ExtendedQuantityPer, p.FinishedGoodOpSeq, P.alternate_designator
+					SELECT FinishedGood,p.comp_item, part, position ,make_buy,CAST(ExtendedQuantityPer AS int) FloorFiberQuantity,ExtendedQuantityPer , p.FinishedGoodOpSeq, P.alternate_designator
 					FROM dbo.Oracle_Items G CROSS APPLY dbo.usf_SplitString(g.product_class,'.')  
 					INNER JOIN ##BomExplode P ON P.comp_item = G.item_number
 					WHERE  ((part IN ('Fiber','Ribbon') AND position = 4)  OR (part ='Bare Ribbon' AND position = 5)) AND make_buy = 'buy' --AND p.alternate_designator = 'primary'
@@ -86,7 +88,7 @@ BEGIN
 				cteFiberCount
 				AS(
 
-				SELECT FinishedGood,SUM(CAST(ExtendedQuantityPer AS INT)) AS FiberCount, SUM(ExtendedQuantityPer) AS FiberMeters,cteFiber.FinishedGoodOpSeq,cteFiber.alternate_designator
+				SELECT FinishedGood,SUM(CAST(FloorFiberQuantity AS INT)) AS FiberCount, SUM(ExtendedQuantityPer) AS FiberMeters,cteFiber.FinishedGoodOpSeq,cteFiber.alternate_designator
 				FROM cteFiber
 				GROUP BY FinishedGood,cteFiber.FinishedGoodOpSeq,alternate_designator
 					)

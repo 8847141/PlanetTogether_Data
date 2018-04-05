@@ -4,12 +4,14 @@ SET ANSI_NULLS ON
 GO
 
 
+
+
 -- =============================================
 -- Author:      Bryan Eddy
 -- Create date: 8/23/2017
 -- Description: Procedure to update the fiber count of cables with open orders
--- Version: 2
--- Update:	Added Merge statement for items with no fiber count
+-- Version: 3
+-- Update:	Removed [PlanetTogether_Data_Test] pointer
 -- =============================================
 
 CREATE PROCEDURE [Setup].[usp_GetFiberCount]
@@ -59,7 +61,7 @@ DECLARE @BomExplode TABLE(
 			DROP TABLE #OrderItems;
 			SELECT DISTINCT assembly_item 
 			INTO #OrderItems
-			FROM PlanetTogether_Data_Test.dbo.Oracle_Orders
+			FROM dbo.Oracle_Orders
 
 
 			INSERT INTO #OrderItems
@@ -85,20 +87,22 @@ DECLARE @BomExplode TABLE(
 
 		END
 
+
 	--Insert Fiber count for all BOM's containing fiber
 	BEGIN TRY
 		BEGIN tran
 			;WITH cteFiber
 			AS(
-				SELECT FinishedGood,p.comp_item, part, position ,make_buy, ExtendedQuantityPer
+				SELECT FinishedGood,p.comp_item, part, position ,make_buy, ExtendedQuantityPer, CAST(P.ExtendedQuantityPer AS INT) FloorFiberQuanity
 				FROM dbo.Oracle_Items G CROSS APPLY dbo.usf_SplitString(g.product_class,'.') 
 				INNER JOIN @BomExplode P ON P.comp_item = G.item_number
 				WHERE  ((part IN ('Fiber','Ribbon') AND position = 4)  OR (part ='Bare Ribbon' AND position = 5)) AND make_buy = 'buy' AND p.alternate_designator = 'primary'
 			)
-			SELECT FinishedGood,SUM(CAST(ExtendedQuantityPer AS INT)) AS FiberCount,SUM(ExtendedQuantityPer) AS FiberMeters
+			SELECT FinishedGood,SUM(CAST(FloorFiberQuanity AS INT)) AS FiberCount,SUM(ExtendedQuantityPer) AS FiberMeters
 			INTO #FiberCount
 			FROM cteFiber
 			GROUP BY FinishedGood
+
 
 			--Insert items 
 			INSERT INTO #FiberCount(FinishedGood, FiberCount, FiberMeters)
@@ -129,7 +133,7 @@ DECLARE @BomExplode TABLE(
 		THROW;
 	END CATCH;
 
-	--Get fibre count for all other items not found above.  Insert fiber count of 0.
+	--Get fiber count for all other items not found above.  Insert fiber count of 0.
 	BEGIN TRY
 		BEGIN TRAN
 
@@ -158,6 +162,34 @@ DECLARE @BomExplode TABLE(
 		THROW;
 	END CATCH;
 
+			--Update any fiber count where product category > 0
+	BEGIN TRY
+		BEGIN TRAN
+			;WITH cteZeroFiberCount
+			AS(
+				SELECT G.ItemNumber,CategoryName
+				FROM Setup.ItemAttributes K INNER JOIN [NAASPB-PRD04\SQL2014].Premise.dbo.AFLPRD_INVItmCatg_CAB G ON K.ItemNumber = G.ItemNumber
+				WHERE  G.CategorySetName LIKE '%FIBER COUNT%' --AND ISNUMERIC(G.CategoryName) = 1
+
+			)
+			UPDATE K
+			SET FiberCount = X.FiberCount
+			FROM(
+				SELECT SUM(CAST(cteZeroFiberCount.CategoryName AS INT)) FiberCount, cteZeroFiberCount.ItemNumber
+				FROM cteZeroFiberCount
+				GROUP BY ItemNumber
+				) X INNER JOIN Setup.ItemAttributes K ON K.itemnumber = X.itemnumber
+		COMMIT TRAN
+	END TRY
+	BEGIN CATCH
+		ROLLBACK TRANSACTION;
+
+ 
+		PRINT 'Actual error number: ' + CAST(@ErrorNumber AS VARCHAR(10));
+		PRINT 'Actual line number: ' + CAST(@ErrorLine AS VARCHAR(10));
+ 
+		THROW;
+	END CATCH;
 
 
 END

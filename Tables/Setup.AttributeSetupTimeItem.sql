@@ -15,6 +15,8 @@ ALTER TABLE [Setup].[AttributeSetupTimeItem] ADD CONSTRAINT [PK_AttributeItemSet
 GO
 CREATE NONCLUSTERED INDEX [AttributeSetupTimeItem_IXX] ON [Setup].[AttributeSetupTimeItem] ([MachineGroupID], [AttributeNameID]) INCLUDE ([Item_Number], [MachineID], [Setup], [SetupAttributeValue], [SetupTime]) ON [PRIMARY]
 GO
+CREATE NONCLUSTERED INDEX [AttributeSetupTimeItem_XI] ON [Setup].[AttributeSetupTimeItem] ([Setup], [MachineID]) INCLUDE ([AttributeNameID], [MachineGroupID]) ON [PRIMARY]
+GO
 ALTER TABLE [Setup].[AttributeSetupTimeItem] ADD CONSTRAINT [FK_AttributeSetupTimeItem_ApsSetupAttributes] FOREIGN KEY ([AttributeNameID]) REFERENCES [Setup].[ApsSetupAttributes] ([AttributeNameID]) ON DELETE CASCADE ON UPDATE CASCADE
 GO
 ALTER TABLE [Setup].[AttributeSetupTimeItem] ADD CONSTRAINT [FK_AttributeSetupTimeItem_MachineNames] FOREIGN KEY ([MachineID], [MachineGroupID]) REFERENCES [Setup].[MachineNames] ([MachineID], [MachineGroupID]) ON DELETE CASCADE ON UPDATE CASCADE

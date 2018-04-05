@@ -1,0 +1,31 @@
+CREATE TABLE [dbo].[_report_4a_production_master_schedule]
+(
+[planned_setup_start] [datetime] NULL,
+[planned_setup_end] [datetime] NULL,
+[previous_op_machine] [varchar] (max) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+[previous_op_status] [varchar] (max) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+[current_op_machine] [varchar] (max) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+[current_op_status] [varchar] (max) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+[next_op_machine] [varchar] (max) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+[dj_number] [varchar] (max) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+[sf_group_id] [varchar] (100) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+[job] [varchar] (max) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+[op] [varchar] (max) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+[setup] [varchar] (max) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+[customer] [varchar] (max) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+[order_number] [varchar] (max) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+[oracle_dj_status] [varchar] (80) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+[part_no] [varchar] (max) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+[job_qty] [float] NULL,
+[ujcm] [varchar] (max) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+[earliest_material_availability_date] [datetime] NULL,
+[need_date] [datetime] NULL,
+[promise_date] [datetime] NULL,
+[scheduled_end_date] [datetime] NULL,
+[scheduled_run_hours] [float] NULL,
+[scheduled_setup_hours] [float] NULL,
+[scheduled_total_hours] [float] NULL,
+[late_order] [varchar] (1) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
+[remake] [varchar] (1) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL
+) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+GO

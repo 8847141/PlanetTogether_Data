@@ -2,6 +2,7 @@ SET QUOTED_IDENTIFIER ON
 GO
 SET ANSI_NULLS ON
 GO
+
 /*
 Author:		Bryan Eddy
 Date:		2/2/2018
@@ -28,7 +29,7 @@ SET NOCOUNT ON;
 			,COUNT(setup) OVER (PARTITION BY Setup) NumberOfJobsAffected
 		FROM (
 				SELECT DISTINCT Setup, I.assembly_item,I.wip_entity_name, I.date_released  , I.assembly_description, I.department_code
-				FROM	Setup.vMissingSetups K INNER JOIN dbo.Oracle_DJ_Routes  I ON I.true_operation_code = K.Setup
+				FROM	Setup.vMissingSetupsDj K INNER JOIN dbo.Oracle_DJ_Routes  I ON I.true_operation_code = K.Setup
 					)  I
 	)
 	SELECT  G.*

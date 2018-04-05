@@ -262,7 +262,7 @@ DECLARE @ErrorLine INT = ERROR_LINE();
 			INNER JOIN Setup.DepartmentIndicator P ON p.department_code = g.department_code
 			INNER JOIN Setup.AttributeMatrixVariableValue U ON U.AttributeValue = K.FiberCount AND P.MachineID = U.MachineID
 			INNER JOIN Setup.vMachineAttributes Y ON Y.MachineID = P.MachineID AND Y.AttributeNameID = U.AttributeNameID 
-			WHERE ValueTypeID = 7 AND pass_to_aps NOT IN ('d','N') --AND K.ItemNumber = 'DNS-OSP-0063'
+			WHERE ValueTypeID = 7 AND pass_to_aps NOT IN ('d','N') AND K.PrimaryAlternate = 'primary' 
 		COMMIT TRAN
 	END TRY
 	BEGIN CATCH
@@ -285,6 +285,7 @@ DECLARE @ErrorLine INT = ERROR_LINE();
 			INNER JOIN Setup.AttributeMatrixFixedValue U ON G.MachineID = U.MachineID
 			INNER JOIN Setup.vMachineAttributes Y ON Y.MachineID = G.MachineID AND Y.AttributeNameID = U.AttributeNameID 
 			WHERE ValueTypeID = 3 AND k.PrimaryAlternate = 'primary' AND U.AttributeNameID = 7
+
 		COMMIT TRAN
 	END TRY
 	BEGIN CATCH

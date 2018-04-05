@@ -7,12 +7,14 @@ GO
 
 
 
+
+
 /*
 Author:			Bryan Eddy
 Date:			12/17/2017
 Description:	Shows orders lines for excluded items
-Version:		1
-Update:			NONE
+Version:		2
+Update:			Updated to concatenate the sales order and line number.  Updated data being pulled from only DJ's missing setups.
 
 
 */
@@ -20,8 +22,8 @@ Update:			NONE
 CREATE VIEW	[Setup].[vExcludedOrders]
 AS
 
-SELECT DISTINCT K.order_number, K.line_number, G.ItemNumber, K.order_status, K.customer_name, K.customer_number
-FROM Setup.vExclusionItemList G INNER JOIN dbo.Oracle_Orders K ON K.assembly_item = G.ItemNumber
+SELECT DISTINCT g.ConcOrderNumber AS conc_order_number, K.customer_name, K.assembly_item ItemNumber, K.order_status, K.customer_number,g.ParentDj
+FROM Setup.vExcludedOrdersDetail G INNER JOIN dbo.Oracle_Orders K ON k.conc_order_number = G.ConcOrderNumber
 
 
 

@@ -9,6 +9,8 @@ GO
 
 
 
+
+
 -- =============================================
 -- Author:      Bryan Eddy
 -- Create date: 9/11/2017
@@ -219,6 +221,25 @@ BEGIN TRY
 			FROM DBO.Oracle_BOMs G 
 			INNER JOIN setup.ItemAttributes P ON P.ItemNumber = G.item_number
 			WHERE G.comp_item LIKE 'bin%'
+		COMMIT TRAN
+	END TRY
+	BEGIN CATCH
+		IF @@TRANCOUNT > 0
+		ROLLBACK TRANSACTION;
+ 
+		PRINT 'Actual error number: ' + CAST(@ErrorNumber AS VARCHAR(10));
+		PRINT 'Actual line number: ' + CAST(@ErrorLine AS VARCHAR(10));
+ 
+		THROW;
+	END CATCH;
+
+	--Get if cable contains a stripe
+	BEGIN TRY
+		BEGIN TRAN
+			UPDATE K
+			SET Printed = SetupAttributeValue
+			FROM Setup.vSetupTimesItem G INNER JOIN Setup.ItemAttributes K ON K.ItemNumber = G.Item_Number
+			WHERE G.AttributeNameID = 37
 		COMMIT TRAN
 	END TRY
 	BEGIN CATCH
