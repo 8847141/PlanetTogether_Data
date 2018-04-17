@@ -14,6 +14,7 @@ CREATE TABLE [dbo].[_report_4a_production_master_schedule]
 [setup] [varchar] (max) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
 [customer] [varchar] (max) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
 [order_number] [varchar] (max) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+[order_scheduled_end_date] [datetime] NULL,
 [oracle_dj_status] [varchar] (80) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
 [part_no] [varchar] (max) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
 [job_qty] [float] NULL,
@@ -21,11 +22,13 @@ CREATE TABLE [dbo].[_report_4a_production_master_schedule]
 [earliest_material_availability_date] [datetime] NULL,
 [need_date] [datetime] NULL,
 [promise_date] [datetime] NULL,
+[schedule_ship_date] [datetime] NULL,
 [scheduled_end_date] [datetime] NULL,
 [scheduled_run_hours] [float] NULL,
 [scheduled_setup_hours] [float] NULL,
 [scheduled_total_hours] [float] NULL,
 [late_order] [varchar] (1) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
-[remake] [varchar] (1) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL
+[remake] [varchar] (1) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
+[last_update_date] [datetime] NOT NULL
 ) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
 GO

@@ -27,7 +27,7 @@ CREATE TABLE [dbo].[_mst_push]
 [total_job_length] [float] NULL,
 [group_id] [nvarchar] (20) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
 [staging_number] [nvarchar] (max) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
-[fiber_set_id] [bigint] NULL,
+[fiber_set_id] [varchar] (max) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
 [complete] [varchar] (7) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
 [scheduled] [varchar] (7) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
 [locked] [varchar] (1) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,

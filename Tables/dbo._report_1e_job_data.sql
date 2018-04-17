@@ -1,5 +1,6 @@
 CREATE TABLE [dbo].[_report_1e_job_data]
 (
+[last_update_date] [datetime] NOT NULL,
 [Name] [varchar] (max) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
 [OrderNumber] [varchar] (max) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
 [Commitment] [varchar] (max) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
@@ -22,7 +23,7 @@ CREATE TABLE [dbo].[_report_1e_job_data]
 [PromiseLateness UDF] [float] NULL,
 [PromiseLate UDF] [bit] NULL,
 [Bottlenecks] [varchar] (max) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
-[FiberSet UDF] [bigint] NULL,
+[FiberSet UDF] [varchar] (max) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
 [Staging UDF] [varchar] (max) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
 [Locked] [varchar] (max) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
 [Anchored] [varchar] (max) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,

@@ -19,5 +19,29 @@ CREATE TABLE [dbo].[Oracle_Onhand]
 [unique_id] [varchar] (100) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL
 ) ON [PRIMARY]
 GO
+SET QUOTED_IDENTIFIER ON
+GO
+SET ANSI_NULLS ON
+GO
+
+CREATE TRIGGER [dbo].[OnHand_MassDelete]
+ON [dbo].[Oracle_Onhand]
+FOR DELETE 
+AS
+	DECLARE @DeleteCount INT = (SELECT COUNT(*) FROM deleted)
+	DECLARE @EmailSubject varchar(1000) = 'Oracle_OnHand data is being deleted ' + CAST(GETDATE() AS NVARCHAR(50))
+
+    IF(@DeleteCount > 100)
+        EXEC msdb.dbo.sp_send_dbmail
+        @recipients = 'Bryan.Eddy@aflglobal.com; Shannon.Jackson@aflglobal.com; Prasad.Patchipulusu@aflglobal.com; Krishna.Vemuri@aflglobal.com; Jeff.Gilfillan@aflglobal.com;' ,
+        @body = 'Oracle_OnHand data is being deleted.',
+        @subject = @EmailSubject;
+GO
 ALTER TABLE [dbo].[Oracle_Onhand] ADD CONSTRAINT [PK_Oracle_onhand] PRIMARY KEY CLUSTERED  ([unique_id]) ON [PRIMARY]
+GO
+ALTER TABLE [dbo].[Oracle_Onhand] ENABLE CHANGE_TRACKING WITH (TRACK_COLUMNS_UPDATED = ON)
+GO
+DENY DELETE ON  [dbo].[Oracle_Onhand] TO [NAA\SPB_Scheduling_RW]
+GO
+ALTER TABLE [dbo].[Oracle_Onhand] ENABLE CHANGE_TRACKING WITH (TRACK_COLUMNS_UPDATED = ON)
 GO

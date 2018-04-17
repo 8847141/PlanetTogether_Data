@@ -7,6 +7,7 @@ CREATE TABLE [dbo].[_report_9b_capacity_sa]
 [available_hours] [float] NULL,
 [utilized_hours] [numeric] (17, 6) NOT NULL,
 [output_qty] [float] NOT NULL,
-[sa_type] [varchar] (max) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL
+[sa_type] [varchar] (max) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
+[last_update_date] [datetime] NOT NULL
 ) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
 GO

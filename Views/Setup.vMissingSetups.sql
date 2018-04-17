@@ -2,6 +2,7 @@ SET QUOTED_IDENTIFIER ON
 GO
 SET ANSI_NULLS ON
 GO
+
 /*
 Author:			Bryan Eddy
 Date:			2/2/2018	
@@ -17,7 +18,9 @@ AS
 
 	SELECT    DISTINCT 
 	G.item_number Item,
-	true_operation_code AS Setup
+	true_operation_code AS Setup,
+	G.department_code,
+	G.alternate_routing_designator
 	FROM Setup.vSetupLineSpeed K RIGHT JOIN dbo.Oracle_Routes G ON G.true_operation_code = K.Setup 
 	LEFT JOIN Setup.DepartmentIndicator I ON I.department_code = G.department_code
 	INNER JOIN dbo.Oracle_Items P ON P.item_number = G.item_number
