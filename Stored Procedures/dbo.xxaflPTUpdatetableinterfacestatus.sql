@@ -68,4 +68,7 @@ IF @Status = 'Complete'
         @ReturnStatus = 'Failure'    
 
 END CATCH;
+
+GO
+DENY EXECUTE ON  [dbo].[xxaflPTUpdatetableinterfacestatus] TO [NAA\SPB_Scheduling_RW]
 GO

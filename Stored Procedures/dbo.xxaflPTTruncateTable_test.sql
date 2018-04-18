@@ -63,4 +63,7 @@ BEGIN CATCH
     SELECT
         @ReturnStatus = 'Failure'            
 END CATCH;
+
+GO
+DENY EXECUTE ON  [dbo].[xxaflPTTruncateTable_test] TO [NAA\SPB_Scheduling_RW]
 GO

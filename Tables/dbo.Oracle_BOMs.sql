@@ -33,3 +33,5 @@ CREATE NONCLUSTERED INDEX [IX_Oracle_BOMs_1] ON [dbo].[Oracle_BOMs] ([comp_item]
 GO
 CREATE NONCLUSTERED INDEX [IX_Oracle_BOMs] ON [dbo].[Oracle_BOMs] ([item_number], [opseq], [inventory_item_status_code], [comp_item]) ON [PRIMARY]
 GO
+DENY DELETE ON  [dbo].[Oracle_BOMs] TO [NAA\SPB_Scheduling_RW]
+GO

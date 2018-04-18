@@ -3,6 +3,8 @@ GO
 SET ANSI_NULLS ON
 GO
 
+
+
 /*
 Author:		Bryan Eddy
 Date:		2/2/2018
@@ -29,12 +31,13 @@ SET NOCOUNT ON;
 			,COUNT(setup) OVER (PARTITION BY Setup) NumberOfJobsAffected
 		FROM (
 				SELECT DISTINCT Setup, I.assembly_item,I.wip_entity_name, I.date_released  , I.assembly_description, I.department_code
-				FROM	Setup.vMissingSetupsDj K INNER JOIN dbo.Oracle_DJ_Routes  I ON I.true_operation_code = K.Setup
+				FROM	Setup.vMissingSetupsDj K INNER JOIN dbo.Oracle_DJ_Routes  I ON I.true_operation_code = K.Setup 
+						--INNER JOIN Scheduling.vOracleOrders j ON j.parent_dj_number = i.wip_entity_name
 					)  I
 	)
 	SELECT  G.*
 	INTO #Results
-	FROM cteJobsMissingSetups G INNER JOIN Setup.MissingSetups K ON g.Setup = k.Setup
+	FROM cteJobsMissingSetups G left JOIN Setup.MissingSetups K ON g.Setup = k.Setup
 	WHERE G.EarliestReleasedDate = G.date_released AND G.RowNumber = 1
 
 	--Merge missing setups with the MissingSetups table
@@ -68,22 +71,14 @@ SET NOCOUNT ON;
 	SELECT @numRows = count(*) FROM #Results;
 
 
-	--SET @ReceipientList = (STUFF((SELECT ';' + UserEmail 
-	--						FROM [NAASPB-PRD04\SQL2014].Premise.dbo.tblConfiguratorUser G  INNER JOIN [NAASPB-PRD04\SQL2014].Premise.users.UserResponsibility  K ON  G.UserID = K.UserID
-	--  						WHERE K.ResponsibilityID = 1 FOR XML PATH('')),1,1,''))
+	SET @ReceipientList = (STUFF((SELECT ';' + UserEmail 
+							FROM [NAASPB-PRD04\SQL2014].premise.dbo.tblConfiguratorUser G  INNER JOIN [NAASPB-PRD04\SQL2014].premise.users.UserResponsibility  K ON  G.UserID = K.UserID
+  							WHERE K.ResponsibilityID IN (1,16) FOR XML PATH('')),1,1,''))
 
-	--SET @BlindRecipientlist = (STUFF((SELECT ';' + UserEmail 
-	--						FROM [NAASPB-PRD04\SQL2014].Premise.dbo.tblConfiguratorUser G  INNER JOIN [NAASPB-PRD04\SQL2014].Premise.users.UserResponsibility  K ON  G.UserID = K.UserID
-	--  						WHERE K.ResponsibilityID = 4 FOR XML PATH('')),1,1,''))
+	SET @ReceipientList = @ReceipientList +';'+ (STUFF((SELECT ';' + UserEmail 
+							FROM [NAASPB-PRD04\SQL2014].premise.dbo.tblConfiguratorUser G  INNER JOIN [NAASPB-PRD04\SQL2014].Premise.users.UserResponsibility  K ON  G.UserID = K.UserID
+  							WHERE K.ResponsibilityID = 4 FOR XML PATH('')),1,1,''))
 
-	/*
-	************************************************************
-	Temporary until scheduling has production data******
-	************************************************************
-	*/
-	SET @Receipientlist =  (STUFF((SELECT ';' + UserEmail 
-							FROM [NAASPB-PRD04\SQL2014].Premise.dbo.tblConfiguratorUser G  INNER JOIN [NAASPB-PRD04\SQL2014].Premise.users.UserResponsibility  K ON  G.UserID = K.UserID
- 								WHERE K.ResponsibilityID = 4 FOR XML PATH('')),1,1,''))
 
 	SET @BlindRecipientlist = @BlindRecipientlist + ';Bryan.Eddy@aflglobal.com';
 
@@ -91,7 +86,7 @@ SET NOCOUNT ON;
 	DECLARE @body1 VARCHAR(MAX)
 	DECLARE @subject VARCHAR(MAX)
 	--DECLARE @query VARCHAR(MAX) = N'SELECT * FROM tempdb..#Results;'
-	SET @subject = 'Missing Setups for Discrete Jobs Alert' 
+	SET @subject = 'Discrete Jobs Missing Setup Alerts' 
 	SET @body1 = 'There are  ' + CAST(@numRows AS NVARCHAR(20)) + ' item(s) missing setup information for DJs.  Please review.' +CHAR(13)+CHAR(13)
 
 	DECLARE @tableHTML  NVARCHAR(MAX) ;

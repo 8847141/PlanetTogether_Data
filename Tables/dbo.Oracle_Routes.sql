@@ -34,3 +34,5 @@ CREATE NONCLUSTERED INDEX [IX_Oracle_Routes_1] ON [dbo].[Oracle_Routes] ([true_o
 GO
 CREATE NONCLUSTERED INDEX [Oracle_Routes_IXX] ON [dbo].[Oracle_Routes] ([true_operation_seq_num]) INCLUDE ([alternate_routing_designator], [department_code], [item_number], [true_operation_code]) ON [PRIMARY]
 GO
+DENY DELETE ON  [dbo].[Oracle_Routes] TO [NAA\SPB_Scheduling_RW]
+GO

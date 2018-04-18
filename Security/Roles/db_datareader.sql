@@ -1,3 +1,5 @@
+
+EXEC sp_addrolemember N'db_datareader', N'planettogether_RO'
 EXEC sp_addrolemember N'db_datareader', N'NAA\didonrt'
 GO
 EXEC sp_addrolemember N'db_datareader', N'NAA\gilfigw'

@@ -15,3 +15,5 @@ CREATE TABLE [dbo].[Oracle_Item_Attributes]
 GO
 ALTER TABLE [dbo].[Oracle_Item_Attributes] ADD CONSTRAINT [PK_Oracle_Item_Attributes] PRIMARY KEY CLUSTERED  ([unique_id]) ON [PRIMARY]
 GO
+DENY DELETE ON  [dbo].[Oracle_Item_Attributes] TO [NAA\SPB_Scheduling_RW]
+GO

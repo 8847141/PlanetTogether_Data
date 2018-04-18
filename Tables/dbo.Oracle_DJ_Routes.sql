@@ -56,3 +56,5 @@ ALTER TABLE [dbo].[Oracle_DJ_Routes] ADD CONSTRAINT [PK_Oracle_DJ_Routes] PRIMAR
 GO
 CREATE NONCLUSTERED INDEX [IX_Oracle_DJ_Routes] ON [dbo].[Oracle_DJ_Routes] ([true_operation_code], [assembly_item], [department_code]) ON [PRIMARY]
 GO
+DENY DELETE ON  [dbo].[Oracle_DJ_Routes] TO [NAA\SPB_Scheduling_RW]
+GO

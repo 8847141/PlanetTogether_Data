@@ -49,3 +49,5 @@ CREATE TABLE [dbo].[Oracle_DJ_BOM]
 GO
 ALTER TABLE [dbo].[Oracle_DJ_BOM] ADD CONSTRAINT [PK_Oracle_DJ_BOM] PRIMARY KEY CLUSTERED  ([unique_id]) ON [PRIMARY]
 GO
+DENY DELETE ON  [dbo].[Oracle_DJ_BOM] TO [NAA\SPB_Scheduling_RW]
+GO

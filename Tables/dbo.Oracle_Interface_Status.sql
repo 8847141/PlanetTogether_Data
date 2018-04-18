@@ -41,3 +41,5 @@ END
 GO
 ALTER TABLE [dbo].[Oracle_Interface_Status] ADD CONSTRAINT [PK_Oracle_Interface_Status_1] PRIMARY KEY CLUSTERED  ([interface_name]) ON [PRIMARY]
 GO
+DENY DELETE ON  [dbo].[Oracle_Interface_Status] TO [NAA\SPB_Scheduling_RW]
+GO
