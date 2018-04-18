@@ -1,0 +1,11 @@
+{
+  "Id": "ee1acf4e-cc34-4849-8b71-6949ff238eeb",
+  "Name": "Covers changes to: RJTEst. Script created at 2018-04-17 07:47.",
+  "ObjectIds": [
+    {
+      "Name": "RJTEst",
+      "Owner": "dbo",
+      "ObjectType": "Table"
+    }
+  ]
+}
