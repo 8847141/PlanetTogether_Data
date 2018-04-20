@@ -66,7 +66,7 @@ Determine what items and sub-items are located in open orders.
 		FROM [NAASPB-PRD04\SQL2014].Premise.dbo.AFLPRD_ORDDTLREPT_UPLOAD_CAB
 		UNION
 		SELECT DISTINCT assembly_item, i.item_description, need_by_date, order_number, line_number
-		FROM dbo.Oracle_Orders INNER JOIN dbo.Oracle_Items i ON i.item_number = assembly_item
+		FROM Scheduling.vOracleOrders INNER JOIN dbo.Oracle_Items i ON i.item_number = assembly_item
 	)
 	SELECT *
 	INTO #OpenOrders
@@ -135,7 +135,7 @@ SELECT @numRows = count(*) FROM #Results;
 
 SET @ReceipientList = (STUFF((SELECT ';' + UserEmail 
 						FROM [NAASPB-PRD04\SQL2014].premise.dbo.tblConfiguratorUser G  INNER JOIN [NAASPB-PRD04\SQL2014].premise.users.UserResponsibility  K ON  G.UserID = K.UserID
-  						WHERE K.ResponsibilityID IN(1,16) FOR XML PATH('')),1,1,''))
+  						WHERE K.ResponsibilityID = 1 FOR XML PATH('')),1,1,''))
 
 SET @ReceipientList = @ReceipientList +';'+ (STUFF((SELECT ';' + UserEmail 
 						FROM [NAASPB-PRD04\SQL2014].premise.dbo.tblConfiguratorUser G  INNER JOIN [NAASPB-PRD04\SQL2014].Premise.users.UserResponsibility  K ON  G.UserID = K.UserID

@@ -5,12 +5,13 @@ GO
 
 
 
+
 /*
 Author:		Bryan Eddy
 Date:		2/2/2018
 Desc:		Email alert to notify of DJ's with setups missing
-Version:	1
-Update:		Initial creation
+Version:	2
+Update:		Updated to show all affected DJ's and the op sequence
 */
 
 CREATE PROCEDURE [Setup].[usp_EmailMissingDjSetup]
@@ -25,24 +26,24 @@ SET NOCOUNT ON;
 
 	WITH cteJobsMissingSetups
 	AS(
-		SELECT DISTINCT Setup, I.assembly_item,I.wip_entity_name, I.date_released,assembly_description, I.department_code
-		,MIN(I.date_released) OVER (PARTITION BY Setup) EarliestReleasedDate
-		,ROW_NUMBER() OVER (PARTITION BY Setup ORDER BY date_released) RowNumber
-			,COUNT(setup) OVER (PARTITION BY Setup) NumberOfJobsAffected
+		SELECT DISTINCT Setup, I.assembly_item,I.wip_entity_name, I.date_released,assembly_description, I.department_code,operation_seq_num
+		--,MIN(I.date_released) OVER (PARTITION BY Setup) EarliestReleasedDate
+		--,ROW_NUMBER() OVER (PARTITION BY Setup ORDER BY date_released) RowNumber
+			--,COUNT(setup) OVER (PARTITION BY Setup) NumberOfJobsAffected
 		FROM (
-				SELECT DISTINCT Setup, I.assembly_item,I.wip_entity_name, I.date_released  , I.assembly_description, I.department_code
+				SELECT DISTINCT Setup, I.assembly_item,I.wip_entity_name, I.date_released  , I.assembly_description, I.department_code, I.operation_seq_num
 				FROM	Setup.vMissingSetupsDj K INNER JOIN dbo.Oracle_DJ_Routes  I ON I.true_operation_code = K.Setup 
-						--INNER JOIN Scheduling.vOracleOrders j ON j.parent_dj_number = i.wip_entity_name
+						INNER JOIN Scheduling.vOracleOrders j ON j.parent_dj_number = i.wip_entity_name
 					)  I
 	)
 	SELECT  G.*
 	INTO #Results
 	FROM cteJobsMissingSetups G left JOIN Setup.MissingSetups K ON g.Setup = k.Setup
-	WHERE G.EarliestReleasedDate = G.date_released AND G.RowNumber = 1
+	--WHERE G.EarliestReleasedDate = G.date_released AND G.RowNumber = 1
 
 	--Merge missing setups with the MissingSetups table
 	MERGE Setup.MissingSetups AS T
-	USING #Results s
+	USING (SELECT DISTINCT Setup FROM #Results) s
 	ON t.Setup = S.Setup
 	WHEN MATCHED THEN
 	UPDATE SET T.DateMostRecentAppearance = GETDATE()
@@ -52,16 +53,16 @@ SET NOCOUNT ON;
 	--Results to populate the email table
 	IF OBJECT_ID(N'tempdb..#FinalResults', N'U') IS NOT NULL
 	DROP TABLE #FinalResults;
-	SELECT DATEDIFF(dd,K.DateCreated,K.DateMostRecentAppearance) DaysMissing, k.DateCreated, k.DateMostRecentAppearance
-	,cast(EarliestReleasedDate AS date) EarliestReleasedDate, j.NumberOfJobsAffected, j.department_code, j.wip_entity_name,j.assembly_item
+	SELECT DATEDIFF(dd,K.DateCreated,K.DateMostRecentAppearance) DaysMissing, k.DateCreated, k.DateMostRecentAppearance,CAST(j.operation_seq_num AS INT) operation_seq_num
+	,cast(J.date_released AS date) date_released, j.department_code, j.wip_entity_name,j.assembly_item
 	,J.Setup
 	INTO #FinalResults
 	FROM setup.MissingSetups K INNER JOIN	#Results J ON K.Setup = J.Setup
-	ORDER BY cast(EarliestReleasedDate AS date)--,DaysMissing DESC
+	ORDER BY cast(date_released AS date)--,DaysMissing DESC
 
 	--SELECT *
 	--FROM #FinalResults
-	--ORDER BY EarliestReleasedDate
+	--ORDER BY date_released
 		
 	--Send Email alert
 	DECLARE @numRows int
@@ -73,7 +74,7 @@ SET NOCOUNT ON;
 
 	SET @ReceipientList = (STUFF((SELECT ';' + UserEmail 
 							FROM [NAASPB-PRD04\SQL2014].premise.dbo.tblConfiguratorUser G  INNER JOIN [NAASPB-PRD04\SQL2014].premise.users.UserResponsibility  K ON  G.UserID = K.UserID
-  							WHERE K.ResponsibilityID IN (1,16) FOR XML PATH('')),1,1,''))
+  							WHERE K.ResponsibilityID = 1 FOR XML PATH('')),1,1,''))
 
 	SET @ReceipientList = @ReceipientList +';'+ (STUFF((SELECT ';' + UserEmail 
 							FROM [NAASPB-PRD04\SQL2014].premise.dbo.tblConfiguratorUser G  INNER JOIN [NAASPB-PRD04\SQL2014].Premise.users.UserResponsibility  K ON  G.UserID = K.UserID
@@ -86,7 +87,7 @@ SET NOCOUNT ON;
 	DECLARE @body1 VARCHAR(MAX)
 	DECLARE @subject VARCHAR(MAX)
 	--DECLARE @query VARCHAR(MAX) = N'SELECT * FROM tempdb..#Results;'
-	SET @subject = 'Discrete Jobs Missing Setup Alerts' 
+	SET @subject = 'Discrete Jobs Missing Setup Alerts ' + CAST(GETDATE() AS NVARCHAR(50))
 	SET @body1 = 'There are  ' + CAST(@numRows AS NVARCHAR(20)) + ' item(s) missing setup information for DJs.  Please review.' +CHAR(13)+CHAR(13)
 
 	DECLARE @tableHTML  NVARCHAR(MAX) ;
@@ -101,18 +102,18 @@ SET NOCOUNT ON;
 						N'<p class=MsoNormal><span style=''font-size:11.0pt;font-family:"Calibri","sans-serif";color:#1F497D''>'+
 						N'<table border="1">' +
 						N'<tr><th>Setup</th><th>Days Missing</th>' +
-						N'<th># Jobs Affected</th><th>Item</th>' +
-						N'<th>Job</th><th>Earliest Job Date</th><th>Dept Code</th></tr>' +
+						N'<th>Item</th><th>Op Seq</th>' +
+						N'<th>Job</th><th>Job Released Date</th><th>Dept Code</th></tr>' +
 						CAST ( ( SELECT		td=Setup,    '',
 											td=DaysMissing, '',
-											td=NumberOfJobsAffected, ''	,
 											td=assembly_item, '',
+											td=operation_seq_num, '',
 											td=wip_entity_name, '', 
-											td=EarliestReleasedDate, '',
+											td=date_released, '',
 											td = department_code, ''
 																
 									FROM #FinalResults 
-									ORDER BY EarliestReleasedDate, DaysMissing
+									ORDER BY date_released, DaysMissing
 									FOR XML PATH('tr'), TYPE 
 						) AS NVARCHAR(MAX) ) +
 						N'</table>' ;

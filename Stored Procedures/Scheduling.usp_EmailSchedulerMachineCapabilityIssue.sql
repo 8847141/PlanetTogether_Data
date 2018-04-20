@@ -5,12 +5,13 @@ GO
 
 
 
+
 -- =============================================
 -- Author:		Bryan Edy
 -- Create date: 10/31/2017
 -- Description:	Email notification to scheduling when an item is set to pass by scheduler but is inactive in the Setup data
--- Version: 1
--- Update Reason: Added error handling
+-- Version:		2
+-- Update Reason: Removed query and created Scheduling.vSchedulerMachineCapabilityIssue view for procedure to pull data from
 -- =============================================
 CREATE PROCEDURE [Scheduling].[usp_EmailSchedulerMachineCapabilityIssue] 
 AS
@@ -26,29 +27,13 @@ BEGIN
 
 	/*Chec what can schedule against active setups being passed over.  If a setup is being passed as active, but doesn't show up on any machine 
 	then this procedure will notify the scheduler*/
-	IF OBJECT_ID(N'tempdb..#NotSchedulingSetups', N'U') IS NOT NULL
-	DROP TABLE #NotSchedulingSetups;
-	WITH cteSchedulingActive  --Determine what can schedule
-	AS(
-		SELECT DISTINCT G.SETUP
-		FROM setup.[vSetupStatus] K INNER JOIN Scheduling.MachineCapabilityScheduler G ON G.SETUP = K.Setup AND G.MachineID = K.Machineid
-		WHERE G.ActiveScheduling = 1
-		)
-	SELECT DISTINCT K.Setup AS Setup  
-	INTO #NotSchedulingSetups
-	FROM setup.[vSetupStatus] K LEFT JOIN cteSchedulingActive G ON G.Setup = K.Setup
-	WHERE G.Setup IS NULL AND k.Machineid IS NOT NULL AND K.ActiveSetup = 1
 
-	--SELECT * FROM #NotSchedulingSetups
 
 	IF OBJECT_ID(N'tempdb..#Results', N'U') IS NOT NULL
 	DROP TABLE #Results;
-	SELECT DISTINCT K.MachineID,K.Setup, k.ActiveScheduling, G.ActiveSetup, K.ActiveStatusChangedBy, K.ActiveStatusChangedDate, P.MachineName
+	SELECT *
 	INTO #Results
-	FROM #NotSchedulingSetups I INNER JOIN setup.vSetupStatus G ON G.Setup = I.Setup
-	INNER JOIN Scheduling.MachineCapabilityScheduler K ON K.SETUP = I.Setup
-	INNER JOIN setup.MachineNames P ON P.MachineID = K.MachineID
-	WHERE G.ActiveSetup = 1
+	FROM Scheduling.vSchedulerMachineCapabilityIssue
 
 	--SELECT *FROM #Results
 
