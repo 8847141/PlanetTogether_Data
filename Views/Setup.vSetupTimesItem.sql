@@ -8,6 +8,14 @@ GO
 
 
 
+/*
+Author:		Bryan Eddy
+Desc:		Interface view with PlanetTogether.  Only passes setups the scheduler chooses and informationw we want to pass to PlanetTogether (APS).
+Date:		4/23/2018	
+Version:	2
+Update:		Added MachineGroupID to the fields displayed
+
+*/
 
 
 
@@ -27,6 +35,7 @@ SELECT  Item_Number
 	  ,LogicType
 	  ,ApsData
 	  ,I.MachineID
+	  ,E.MachineGroupID
   FROM [Setup].AttributeSetupTimeItem K
   INNER JOIN setup.MachineGroupAttributes G ON K.MachineGroupID = G.MachineGroupID AND G.AttributeNameID = K.AttributeNameID
   INNER JOIN SETUP.ApsSetupAttributeValueType V ON V.ValueTypeID = G.ValueTypeID
