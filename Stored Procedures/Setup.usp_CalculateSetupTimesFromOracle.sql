@@ -6,6 +6,7 @@ GO
 
 
 
+
 -- =============================================
 -- Author:      Bryan Eddy
 -- Create date: 8/14/2017
@@ -101,7 +102,16 @@ DECLARE @ErrorLine INT = ERROR_LINE();
 		BEGIN TRAN
 			;WITH cteColor
 			as(
-				SELECT K.*, ROW_NUMBER() OVER (PARTITION BY K.item_number,true_operation_Code,MachineGroupID,MachineID,AttributeNameID   ORDER BY K.item_number,(CASE WHEN G.attribute_value = 'COLOR CHIPS' THEN 1 ELSE 0 END)  Desc ) AS RowNumber
+				SELECT K.item_number,
+                       K.true_operation_code,
+                       K.MachineGroupID,
+                       K.MachineID,
+                       K.AttributeNameID,
+                       K.comp_item,
+                       K.attribute_name,
+                       K.attribute_value,
+                       K.ValueTypeID,
+                       K.Countof, ROW_NUMBER() OVER (PARTITION BY K.item_number,true_operation_Code,MachineGroupID,MachineID,AttributeNameID   ORDER BY K.item_number,(CASE WHEN G.attribute_value = 'COLOR CHIPS' THEN 1 ELSE 0 END)  Desc ) AS RowNumber
 				,CASE WHEN G.attribute_value = 'COLOR CHIPS' THEN 1 ELSE 0 END  ColorOrder, g.attribute_value Material_Type
 				FROM #TEMP K  INNER JOIN dbo.Oracle_Item_Attributes G ON K.comp_item = G.item_number
 				WHERE K.attribute_name = 'COLOR'  AND G.attribute_name = 'MATERIAL TYPE' AND G.attribute_value IN ('COLOR CHIPS','COMPOUND')
@@ -354,7 +364,7 @@ DECLARE @ErrorLine INT = ERROR_LINE();
 						FROM setup.AttributeSetupTimeItem K INNER JOIN dbo.Oracle_DJ_Routes B ON K.Setup = b.true_operation_code
 				),
 			cteMissingSetupItems --GEt which DJ items are missing from the setup data
-				as(
+				AS(
 				SELECT R.assembly_item, R.true_operation_code 
 				FROM dbo.Oracle_DJ_Routes R LEFT JOIN  Setup.AttributeSetupTimeItem S ON R.assembly_item = S.Item_Number
 				WHERE S.Item_Number IS NULL AND R.send_to_aps <> 'N'

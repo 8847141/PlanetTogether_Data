@@ -6,8 +6,8 @@ GO
 Author:			Bryan Eddy
 Date:			4/16/2017
 Description:	Send email of the record count of all Oracle tables in the [Oracle_Interface_Status] table.
-Version:		1
-Update:			n/a
+Version:		2
+Update:			Updated recipients to pull from the DL
 */
 
 CREATE PROCEDURE [dbo].[usp_EmailOracleTableRecordCount]
@@ -37,6 +37,13 @@ SELECT @sql=ISNULL(@sql+' ','')+ query FROM @t
 
 EXEC(@sql)
 
+DECLARE @Receipientlist varchar(1000)
+
+SET @Receipientlist = (STUFF((SELECT ';' + UserEmail 
+						FROM [NAASPB-PRD04\SQL2014].premise.dbo.tblConfiguratorUser G  INNER JOIN [NAASPB-PRD04\SQL2014].premise.users.UserResponsibility  K ON  G.UserID = K.UserID
+  						WHERE K.ResponsibilityID = 18 FOR XML PATH('')),1,1,''))
+
+			
 
 
 	DECLARE @html nvarchar(MAX),
@@ -48,7 +55,7 @@ EXEC(@sql)
 
 
 					EXEC msdb.dbo.sp_send_dbmail 
-					@recipients='Bryan.Eddy@aflglobal.com; Shannon.Jackson@aflglobal.com; Prasad.Patchipulusu@aflglobal.com; Krishna.Vemuri@aflglobal.com; Jeff.Gilfillan@aflglobal.com;' ,
+					@recipients=@Receipientlist ,
 					--@recipients='Bryan.Eddy@aflglobal.com;',
 					@blind_copy_recipients = 'bryan.eddy@aflglobal.com',
 					@subject = @SubjectLine,
@@ -56,5 +63,6 @@ EXEC(@sql)
 					@body_format = 'HTML',
 					@query_no_truncate = 1,
 					@attach_query_result_as_file = 0;
+
 
 GO

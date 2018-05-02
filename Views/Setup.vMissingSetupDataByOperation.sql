@@ -6,6 +6,7 @@ GO
 
 
 
+
 CREATE VIEW [Setup].[vMissingSetupDataByOperation]
 AS
 WITH ctevMachine
@@ -16,7 +17,14 @@ AS(
 							 INNER JOIN Setup.MachineNames k ON k.MachineID = g.MachineID
 	WHERE g.PassToAps = 1
 )
-SELECT g.*
+SELECT G.Setup,
+       G.MachineID,
+       G.AttributeName,
+       G.AttributeNameID,
+       G.ValueTypeID,
+       G.ValueTypeDescription,
+       G.MachineName,
+       G.PassToAps
 FROM     ctevMachine G LEFT JOIN Setup.vSetupTimesItem K ON G.MachineID = K.MachineID AND G.AttributeNameID = K.AttributeNameID
 WHERE K.AttributeNameID IS NULL
 

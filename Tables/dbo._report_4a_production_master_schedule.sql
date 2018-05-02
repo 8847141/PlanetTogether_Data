@@ -12,7 +12,7 @@ CREATE TABLE [dbo].[_report_4a_production_master_schedule]
 [job] [varchar] (max) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
 [op] [varchar] (max) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
 [setup] [varchar] (max) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
-[customer] [varchar] (max) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+[customer] [nvarchar] (max) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
 [order_number] [varchar] (max) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
 [order_scheduled_end_date] [datetime] NULL,
 [oracle_dj_status] [varchar] (80) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,

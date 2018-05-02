@@ -2,7 +2,6 @@ SET QUOTED_IDENTIFIER ON
 GO
 SET ANSI_NULLS ON
 GO
-
 /*
 Author:		Bryan Eddy
 Date:		3/14/2018
@@ -16,7 +15,36 @@ Note:		OD first uses OD from Setup information else it uses OD from item.  Item 
 
 CREATE VIEW [Scheduling].[vProductionSchedule]
 AS
-SELECT r.*, m.Plant, M.Department, M.DepartmentID, COALESCE(I.NominalOD, A.NominalOD) AS NominalOD
+SELECT R.planned_setup_start,
+       R.planned_setup_end,
+       R.previous_op_machine,
+       R.previous_op_status,
+       R.current_op_machine,
+       R.current_op_status,
+       R.next_op_machine,
+       R.dj_number,
+       R.sf_group_id,
+       R.job,
+       R.op,
+       R.setup,
+       R.customer,
+       R.order_number,
+       R.order_scheduled_end_date,
+       R.oracle_dj_status,
+       R.part_no,
+       R.job_qty,
+       R.ujcm,
+       R.earliest_material_availability_date,
+       R.need_date,
+       R.promise_date,
+       R.schedule_ship_date,
+       R.scheduled_end_date,
+       R.scheduled_run_hours,
+       R.scheduled_setup_hours,
+       R.scheduled_total_hours,
+       R.late_order,
+       R.remake,
+       R.last_update_date, m.Plant, M.Department, M.DepartmentID, COALESCE(I.NominalOD, A.NominalOD) AS NominalOD
 , I.NumberCorePositions, i.UJCM UpJacketCM, I.JacketMaterial, I.EndsOfAramid
 , CASE WHEN R.promise_date < GETDATE() THEN ROUND(CAST(DATEDIFF(MINUTE,R.promise_date, R.planned_setup_start) AS FLOAT)/60/24,3) END AS PromiseLatenessDays 
 , A.FiberCount, CASE WHEN M.DepartmentID = 5 AND A.Printed = 1 THEN A.CableColor + ' ----' ELSE A.CableColor END AS CableColor, A.Printed

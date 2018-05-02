@@ -5,6 +5,7 @@ GO
 
 
 
+
 /****** Script for SelectTopNRows command from SSMS  ******/
 CREATE VIEW [Setup].[vAttributeMatrixUnion]
 AS
@@ -24,7 +25,14 @@ AS(
   FROM Setup.AttributeMatrixVariableValue
   )
 
-  SELECT U.AttributeName,K.*, T.ValueTypeID, T.LogicType, P.ValueTypeName, P.ValueTypeDescription, T.MachineGroupID, MachineName
+  SELECT U.AttributeName, K.AttributeNameID,
+                         K.MachineID,
+                         K.TimeValue,
+                         K.Cost,
+                         K.FromAttribute,
+                         K.ToAttribute,
+                         K.AttributeValue,
+                         K.Adder, T.ValueTypeID, T.LogicType, P.ValueTypeName, P.ValueTypeDescription, T.MachineGroupID, MachineName
   FROM cteAttributeMatrixUnion K INNER JOIN Setup.MachineNames G ON G.MachineID = K.MachineID
   INNER JOIN setup.MachineGroupAttributes T ON T.AttributeNameID = K.AttributeNameID AND T.MachineGroupID = G.MachineGroupID
   INNER JOIN SETUP.ApsSetupAttributeValueType P ON P.ValueTypeID = T.ValueTypeID

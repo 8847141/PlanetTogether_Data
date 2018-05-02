@@ -6,6 +6,7 @@ GO
 
 
 
+
 -- =============================================
 -- Author:      Bryan Eddy
 -- Create date: 8/23/2017
@@ -63,6 +64,11 @@ DECLARE @BomExplode TABLE(
 			INTO #OrderItems
 			FROM dbo.Oracle_Orders
 
+			INSERT INTO #OrderItems(assembly_item)
+			SELECT DISTINCT component_item 
+			FROM dbo.Oracle_Orders I LEFT JOIN #OrderItems K ON K.assembly_item = I.component_item
+			WHERE K.assembly_item IS NULL
+
 
 			INSERT INTO #OrderItems
 			SELECT DISTINCT G.item_number
@@ -76,6 +82,8 @@ DECLARE @BomExplode TABLE(
 			SELECT DISTINCT g.item_number FROM Setup.ItemAttributes K RIGHT JOIN dbo.Oracle_Items G ON K.ItemNumber = G.item_number
 			LEFT JOIN #OrderItems P ON P.assembly_item = G.item_number
 			WHERE K.ItemNumber IS NULL AND g.make_buy = 'make' AND P.assembly_item IS NULL
+
+
 
 
 			--IF OBJECT_ID(N'tempdb..#BomExplode', N'U') IS NOT NULL

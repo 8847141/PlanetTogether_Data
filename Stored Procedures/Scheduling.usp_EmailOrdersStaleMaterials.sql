@@ -11,7 +11,7 @@ Update:		n/a
 
 */
 
-CREATE PROCEDURE [Scheduling].[EmailOrdersWithMaterialsNotOrderedInNineMonths]
+CREATE PROCEDURE [Scheduling].[usp_EmailOrdersStaleMaterials]
 AS
 BEGIN
 	DECLARE @html nvarchar(MAX),

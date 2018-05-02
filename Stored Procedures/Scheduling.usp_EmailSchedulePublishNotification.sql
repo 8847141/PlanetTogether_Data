@@ -4,6 +4,7 @@ SET ANSI_NULLS ON
 GO
 
 
+
 -- =============================================
 -- Author:		Bryan Eddy
 -- ALTER date:  3/21/2018
@@ -39,7 +40,7 @@ BEGIN
 	
 			SET @tableHTML =
 				N'<H1>Schedule Publish</H1>' +
-				N'<H2 span style=''font-size:16.0pt;font-family:"Calibri","sans-serif";color:#EB3814''>The schedule is updated.</H2>' 
+				N'<H2 span style=''font-size:16.0pt;font-family:"Calibri","sans-serif";color:#EB3814''>The schedule has been updated.</H2>' 
 
 
 			EXEC msdb.dbo.sp_send_dbmail 

@@ -7,6 +7,7 @@ GO
 
 
 
+
 /*
 Author:		Bryan Eddy
 Date:		4/4/2018
@@ -19,19 +20,6 @@ Update:		n/a
 CREATE VIEW [Scheduling].[vOrdersWithMaterialsNotOrderedInNineMonths]
 AS
 /************ Old query.  Keeping until data is confirmed*********************/
---WITH cteBomExplode
---AS (
---	SELECT DISTINCT E.conc_order_number, E.assembly_item, I.*
---	FROM (SELECT DISTINCT conc_order_number, assembly_item FROM dbo.Oracle_Orders WHERE schedule_approved = 'n') E CROSS APPLY dbo.fn_ExplodeBOM(E.assembly_item) I
---)
-
---SELECT DISTINCT  k.conc_order_number, K.FinishedGood,K.comp_item AS Material, j.primary_uom_code, inventory_item_status_code, po_date
---, po_receipt_date, J.make_buy
---,J.item_description MaterialDescription
---FROM dbo.Oracle_Items J INNER JOIN cteBomExplode K ON J.item_number = K.comp_item 
---WHERE (DATEDIFF(MM,po_date,GETDATE()) >= 9 OR DATEDIFF(MM,po_receipt_date,GETDATE()) >=9)
---	AND J.make_buy = 'buy'
-
 
 WITH cteBomExplode
 AS (

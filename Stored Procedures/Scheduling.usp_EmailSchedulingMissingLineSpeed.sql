@@ -178,6 +178,7 @@ BEGIN
 									td=department_code
 									
 							FROM #FinalResults 
+							ORDER BY need_by_date
 						  FOR XML PATH('tr'), TYPE 
 				) AS NVARCHAR(MAX) ) +
 				N'</table>' ;

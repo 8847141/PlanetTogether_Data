@@ -2,6 +2,7 @@ SET QUOTED_IDENTIFIER ON
 GO
 SET ANSI_NULLS ON
 GO
+
 /****** Script for SelectTopNRows command from SSMS  ******/
 
 
@@ -23,7 +24,14 @@ SELECT item_number, alternate_routing_designator, operation_seq_num,operation_co
 FROM dbo.Oracle_Routes
 WHERE pass_to_aps = 'Y'
 )
-SELECT *
+SELECT cteTrueOp.item_number,
+       cteTrueOp.alternate_routing_designator,
+       cteTrueOp.operation_seq_num,
+       cteTrueOp.operation_code,
+       cteTrueOp.true_operation_seq_num,
+       cteTrueOp.true_operation_code,
+       cteTrueOp.pass_to_aps,
+       cteTrueOp.RowNumber
 FROM cteTrueOp
 WHERE cteTrueOp.RowNumber >1
 GO
