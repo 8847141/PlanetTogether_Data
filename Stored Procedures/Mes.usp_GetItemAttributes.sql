@@ -10,8 +10,8 @@ GO
 -- Author:      Bryan Eddy
 -- Create date: 4/23/2018
 -- Description: Procedure to get the designated attributes values for information in Mes.MachineAttributes
--- Version:		1
--- Update:		Initial creation
+-- Version:		2
+-- Update:		Added insert query to get mapped/desired AttributeNameID's fromt the setup data
 -- =============================================
 
 CREATE PROCEDURE [Mes].[usp_GetItemAttributes]
@@ -65,6 +65,33 @@ DECLARE @ErrorLine INT = ERROR_LINE();
  
 		THROW;
 	END CATCH;
+
+
+
+	BEGIN TRY
+		BEGIN TRAN
+			INSERT INTO Mes.ItemSetupAttributes([Setup],MachineID,AttributeNameID,Item_Number, AttributeValue)
+			SELECT DISTINCT K.SetupNumber, M.MachineID, i.AttributeNameID, r.item_number, K.AttributeValue
+			FROM Setup.vInterfaceSetupAttributes K INNER JOIN Setup.ApsSetupAttributeReference i ON i.AttributeID = K.AttributeID
+			INNER JOIN Mes.MachineAttributes M ON M.AttributeNameID = i.AttributeNameID
+			INNER JOIN Setup.vRoutesUnion r ON r.true_operation_code = K.SetupNumber
+			INNER JOIN Setup.MachineReference MR ON MR.PssMachineID = K.PssMachineID AND MR.MachineID = M.MachineID AND MR.PssProcessID = K.PssProcessID
+			LEFT JOIN Mes.ItemSetupAttributes Mes ON Mes.AttributeNameID = i.AttributeNameID 
+				AND Mes.MachineID = M.MachineID AND Mes.Item_Number = r.item_number AND K.SetupNumber = Mes.Setup
+			WHERE mes.Item_Number IS NULL 
+		COMMIT TRAN
+	END TRY
+    	BEGIN CATCH
+		IF @@TRANCOUNT > 0
+		ROLLBACK TRANSACTION;
+ 
+		PRINT 'Actual error number: ' + CAST(@ErrorNumber AS VARCHAR(10));
+		PRINT 'Actual line number: ' + CAST(@ErrorLine AS VARCHAR(10));
+ 
+		THROW;
+	END CATCH;
+
+        
 
 
 END

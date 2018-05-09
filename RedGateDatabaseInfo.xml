@@ -57,7 +57,7 @@
     <DataWriteAllFilesInOneDirectory>True</DataWriteAllFilesInOneDirectory>
   </WriteToFileOptions>
   <DataFileSet>
-    <Count>26</Count>
+    <Count>28</Count>
     <DataFile>Scheduling.OperationRunType_Data.sql</DataFile>
     <DataFile>Setup.ApsSetupAttributes_Data.sql</DataFile>
     <DataFile>Setup.ApsSetupAttributeSource_Data.sql</DataFile>
@@ -84,5 +84,7 @@
     <DataFile>dbo.APS_PriorityValues_HardCoded_Data.sql</DataFile>
     <DataFile>dbo.APS_ProductLeadTimes_HardCoded_Data.sql</DataFile>
     <DataFile>dbo.APS_Resources_QC_HardCoded_Data.sql</DataFile>
+    <DataFile>Mes.ItemSetupAttributes_Data.sql</DataFile>
+    <DataFile>Mes.MachineAttributes_Data.sql</DataFile>
   </DataFileSet>
 </DatabaseInformation>
