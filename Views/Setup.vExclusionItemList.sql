@@ -11,14 +11,14 @@ GO
 
 
 
+
+
 /*
 Author:			Bryan Eddy
 Date:			12/17/2017
 Description:	An exclusion list for PlanetTogether to prevent orders from erroring out during import/refresh
-Version:		5
-Update:			Update exclusion list to not show items with DJ's
-
-
+Version:		6
+Update:			Update exclusion list to included items in the missing material demand report and where those items are used
 
 */
 
@@ -35,6 +35,12 @@ AS(
 	UNION	
 	SELECT G.item_number--,NULL
 	FROM dbo.APS_ProductClass_ToExclude_HardCoded K INNER JOIN dbo.Oracle_Items G ON G.product_class = K.ExcludedProductClass
+	UNION 
+	SELECT DISTINCT E.AssemblyItemNumber
+	FROM Scheduling.vMissingMaterialDemand CROSS APPLY Setup.fn_WhereUsedStdAndDJ(item_number) E
+	UNION
+	SELECT DISTINCT item_number
+	FROM Scheduling.vMissingMaterialDemand 
 )
 SELECT k.ItemNumber, I.inventory_item_status_code, I.product_class
 FROM cteExcludedItems k LEFT JOIN dbo.Oracle_Items I ON I.item_number = K.ItemNumber

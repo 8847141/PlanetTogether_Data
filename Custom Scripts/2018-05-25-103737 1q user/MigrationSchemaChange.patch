@@ -1,0 +1,540 @@
+diff --git a/Functions/dbo.fn_ExplodeBOM.sql b/Functions/dbo.fn_ExplodeBOM.sql
+index 00c3788..b632d76 100644
+--- a/Functions/dbo.fn_ExplodeBOM.sql
++++ b/Functions/dbo.fn_ExplodeBOM.sql
+@@ -25,7 +25,8 @@
+    layer_id INT NULL,
+    count_per_uom INT,
+    alternate_designator  NVARCHAR(10),
+-   FinishedGoodOpSeq smallint
++   FinishedGoodOpSeq SMALLINT, 
++   INDEX IX1 NONCLUSTERED(item_number, comp_item)
+ 
+ )
+ AS
+diff --git a/Security/Users/NAA_SPB_Scheduling_RO.sql b/Security/Users/NAA_SPB_Scheduling_RO.sql
+new file mode 100644
+index 0000000..8fc4fc2
+--- /dev/null
++++ b/Security/Users/NAA_SPB_Scheduling_RO.sql
+@@ -0,0 +1,5 @@
++IF NOT EXISTS (SELECT * FROM master.dbo.syslogins WHERE loginname = N'NAA\SPB_Scheduling_RO')
++CREATE LOGIN [NAA\SPB_Scheduling_RO] FROM WINDOWS
++GO
++CREATE USER [NAA\SPB_Scheduling_RO] FOR LOGIN [NAA\SPB_Scheduling_RO]
++GO
+diff --git a/Stored Procedures/Scheduling.EmailAlertMissingMaterialDemand.sql b/Stored Procedures/Scheduling.EmailAlertMissingMaterialDemand.sql
+new file mode 100644
+index 0000000..66c52bc
+--- /dev/null
++++ b/Stored Procedures/Scheduling.EmailAlertMissingMaterialDemand.sql
+@@ -0,0 +1,62 @@
++SET QUOTED_IDENTIFIER ON
++GO
++SET ANSI_NULLS ON
++GO
++/*
++Author:		Bryan Eddy
++Date:		5/25/2018
++Desc:		Email alert to show missing material demand due to material not referencing correct op sequence
++Version:	1
++Update:		n/a
++*/
++
++CREATE PROCEDURE [Scheduling].[EmailAlertMissingMaterialDemand]
++AS
++BEGIN
++	DECLARE @html nvarchar(MAX),
++	@SubjectLine NVARCHAR(1000),
++	@ReceipientList NVARCHAR(1000),
++	@RowCount INT,
++	@qry NVARCHAR(MAX),
++	@body1 VARCHAR(MAX)
++
++		SET @ReceipientList = (STUFF((SELECT ';' + UserEmail 
++							FROM [NAASPB-PRD04\SQL2014].Premise.dbo.tblConfiguratorUser G  INNER JOIN [NAASPB-PRD04\SQL2014].Premise.users.UserResponsibility  K ON  G.UserID = K.UserID
++	  						WHERE K.ResponsibilityID = 21 FOR XML PATH('')),1,1,''))
++
++	SET @qry = 'SELECT item_number,
++       comp_item,
++       item_seq,
++       Bom_Op_Seq,
++       Route_Op_Seq,
++       inventory_item_status_code,
++       wip_entity_name
++		FROM [Scheduling].[vMissingMaterialDemand]'
++
++	EXEC sp_executesql @qry
++	IF @@ROWCOUNT > 0 
++		BEGIN
++
++		SET @body1 = N'<H1>Missing Material Demand Report</H1>' +
++				N'<H2 span style=''font-size:16.0pt;font-family:"Calibri","sans-serif";color:#EB3814''>Materials are not assigned to an operation passing into the APS system.</H2>' 
++	
++
++			SET @SubjectLine = 'Missing Material Demand' + CAST(GETDATE() AS NVARCHAR(50))
++			EXEC Scheduling.usp_QueryToHtmlTable @html = @html OUTPUT,  
++			@query =@qry, @orderBy = N'ORDER BY item_number'
++
++			SET @html = @body1 + @html
++
++			EXEC msdb.dbo.sp_send_dbmail 
++			@recipients=@ReceipientList,
++			--@recipients = 'bryan.eddy@aflglobal.com',
++			@blind_copy_recipients = 'bryan.eddy@aflglobal.com',
++			@subject = @SubjectLine,
++			@body = @html,
++			@body_format = 'HTML',
++			@query_no_truncate = 1,
++			@attach_query_result_as_file = 0;
++		END
++END
++
++GO
+diff --git a/Stored Procedures/Scheduling.usp_EmailMasterAlert.sql b/Stored Procedures/Scheduling.usp_EmailMasterAlert.sql
+index 2cb4fea..9da17c8 100644
+--- a/Stored Procedures/Scheduling.usp_EmailMasterAlert.sql
++++ b/Stored Procedures/Scheduling.usp_EmailMasterAlert.sql
+@@ -7,6 +7,8 @@
+ /*	Author:	Bryan Eddy
+ 	Date:	11/18/2017
+ 	Desc:	Master scheduling alert that has been added to the daily run job.	
++	Version:	2
++	Update:		Added email alert for missing material demand
+ */
+ 
+ CREATE PROCEDURE [Scheduling].[usp_EmailMasterAlert]
+@@ -20,5 +22,7 @@
+ 
+ 	EXEC Scheduling.usp_EmailSchedulingMissingLineSpeed
+ 
++	EXEC Scheduling.EmailAlertMissingMaterialDemand
++
+ END
+ GO
+diff --git a/Stored Procedures/Scheduling.usp_EmailMfgHoldAlert.sql b/Stored Procedures/Scheduling.usp_EmailMfgHoldAlert.sql
+new file mode 100644
+index 0000000..083942e
+--- /dev/null
++++ b/Stored Procedures/Scheduling.usp_EmailMfgHoldAlert.sql
+@@ -0,0 +1,44 @@
++SET QUOTED_IDENTIFIER ON
++GO
++SET ANSI_NULLS ON
++GO
++/*
++Author:		Bryan Eddy
++Date:		5/16/2018
++Desc:		Alert for items with mfg hold that are <= 21 days from promised date
++Version:	1
++Update:		n/a
++
++*/
++
++CREATE PROCEDURE [Scheduling].[usp_EmailMfgHoldAlert]
++AS
++BEGIN
++	DECLARE @html nvarchar(MAX),
++	@SubjectLine NVARCHAR(1000),
++	@ReceipientList NVARCHAR(1000)
++
++		SET @ReceipientList = (STUFF((SELECT ';' + UserEmail 
++							FROM [NAASPB-PRD04\SQL2014].Premise.dbo.tblConfiguratorUser G  INNER JOIN [NAASPB-PRD04\SQL2014].Premise.users.UserResponsibility  K ON  G.UserID = K.UserID
++	  						WHERE K.ResponsibilityID = 19 FOR XML PATH('')),1,1,''))
++
++
++
++	SET @SubjectLine = 'MFG Hold Alert ' + CAST(GETDATE() AS NVARCHAR(50))
++	EXEC Scheduling.usp_QueryToHtmlTable @html = @html OUTPUT,  
++	@query = N'SELECT order_number, conc_order_number, CAST(promise_date as DATE) promise_date, CAST(need_by_date AS DATE) need_by_date, has_mfg_hold, assembly_item, 
++	customer_name, scheduler, CAST(pri_uom_order_qty AS INT) pri_uom_order_qty FROM Scheduling.vAlertMfgHold', @orderBy = N'ORDER BY order_number';
++
++
++					EXEC msdb.dbo.sp_send_dbmail 
++					@recipients=@ReceipientList,
++					--@recipients = 'bryan.eddy@aflglobal.com',
++					--@blind_copy_recipients =  @BlindRecipientlist, --@ReceipientList
++					@blind_copy_recipients = 'bryan.eddy@aflglobal.com',
++					@subject = @SubjectLine,
++					@body = @html,
++					@body_format = 'HTML',
++					@query_no_truncate = 1,
++					@attach_query_result_as_file = 0;
++END
++GO
+diff --git a/Stored Procedures/Scheduling.usp_EmailSchedulingMissingLineSpeed.sql b/Stored Procedures/Scheduling.usp_EmailSchedulingMissingLineSpeed.sql
+index 67cfe9b..161d62b 100644
+--- a/Stored Procedures/Scheduling.usp_EmailSchedulingMissingLineSpeed.sql
++++ b/Stored Procedures/Scheduling.usp_EmailSchedulingMissingLineSpeed.sql
+@@ -9,8 +9,8 @@
+ -- Author:		Bryan Eddy
+ -- ALTER date: 6/12/17
+ -- Description:	Send email of missing line speeds to Process Engineers
+--- Version:		9
+--- Update:		Removed the Q & K operations from being filtered.  Changed to filtering out "INSPEC" operations.
++-- Version:		10
++-- Update:		Added logic to produce only a single missing setup for each record
+ -- =============================================
+ CREATE PROC [Scheduling].[usp_EmailSchedulingMissingLineSpeed]
+ 
+@@ -95,10 +95,17 @@
+ 		FROM cteMissingSetupOrders
+ 		--WHERE	
+ 	)
+-SELECT DISTINCT FinishedGood,Item,ItemDesc, CAST(need_by_date AS DATE) need_by_date, item_number, Setup, PrimaryAlt,department_code, SoLinesMissingSetups
++	,cteMaxItem
++AS(
++	SELECT DISTINCT FinishedGood,ItemDesc, CAST(need_by_date AS DATE) need_by_date, Setup, PrimaryAlt,department_code, SoLinesMissingSetups
++	, MAX(ITEM) OVER (PARTITION BY setup) MaxItem, e.Item
++	FROM cteConsolidatedMissingSetupOrders e
++	WHERE Max_SechuduleDate = need_by_date
++)
++SELECT DISTINCT FinishedGood,Item,ItemDesc, need_by_date, Setup, PrimaryAlt,department_code, SoLinesMissingSetups
+ INTO #Results
+-FROM cteConsolidatedMissingSetupOrders
+-WHERE Max_SechuduleDate = need_by_date
++FROM cteMaxItem
++WHERE cteMaxItem.MaxItem = Item
+ 
+ --SELECT *
+ --FROM #Results
+diff --git a/Stored Procedures/Scheduling.usp_MasterDailyProcedureRun.sql b/Stored Procedures/Scheduling.usp_MasterDailyProcedureRun.sql
+index 4801dce..a294e57 100644
+--- a/Stored Procedures/Scheduling.usp_MasterDailyProcedureRun.sql
++++ b/Stored Procedures/Scheduling.usp_MasterDailyProcedureRun.sql
+@@ -11,8 +11,8 @@
+ -- Author:		Bryan Eddy
+ -- Create date: 10/6/2017
+ -- Description:	Run all major operations for setup and item attributes
+--- Version: 1
+--- Update: n/a
++-- Version: 2	
++-- Update: Added MES attribute procedure to the master run
+ -- =============================================
+ CREATE PROCEDURE [Scheduling].[usp_MasterDailyProcedureRun]
+ AS
+@@ -36,6 +36,8 @@
+ 
+ 	EXEC [Setup].[usp_GetFiberCountByOperation] @RunType = 2
+ 
++	EXEC mes.usp_GetItemAttributes
++
+ END
+ 
+ 
+diff --git a/Stored Procedures/Scheduling.usp_QueryToHtmlTable.sql b/Stored Procedures/Scheduling.usp_QueryToHtmlTable.sql
+index 185feb5..42e337c 100644
+--- a/Stored Procedures/Scheduling.usp_QueryToHtmlTable.sql
++++ b/Stored Procedures/Scheduling.usp_QueryToHtmlTable.sql
+@@ -2,17 +2,15 @@
+ GO
+ SET ANSI_NULLS ON
+ GO
+-
+-
+-
+ -- Description: Turns a query into a formatted HTML table. Useful for emails. 
+ -- Any ORDER BY clause needs to be passed in the separate ORDER BY parameter.
+ -- =============================================
+ CREATE PROC [Scheduling].[usp_QueryToHtmlTable] 
+ (
+-  @query nvarchar(MAX), --A query to turn into HTML format. It should not include an ORDER BY clause.
+-  @orderBy nvarchar(MAX) = NULL, --An optional ORDER BY clause. It should contain the words 'ORDER BY'.
+-  @html nvarchar(MAX) = NULL OUTPUT --The HTML output of the procedure.
++  @query NVARCHAR(MAX), --A query to turn into HTML format. It should not include an ORDER BY clause.
++  @orderBy NVARCHAR(MAX) = NULL, --An optional ORDER BY clause. It should contain the words 'ORDER BY'.
++  @html NVARCHAR(MAX) = NULL OUTPUT--, --The HTML output of the procedure.
++  --@RecordCount INT OUTPUT
+ )
+ AS
+ BEGIN   
+@@ -24,7 +22,7 @@
+ 
+   SET @orderBy = REPLACE(@orderBy, '''', '''''');
+ 
+-  DECLARE @realQuery nvarchar(MAX) = '
++  DECLARE @realQuery NVARCHAR(MAX) = '
+     DECLARE @headerRow nvarchar(MAX);
+     DECLARE @cols nvarchar(MAX);    
+ 
+@@ -49,6 +47,6 @@
+     SET @html = ''<table border="1">'' + @headerRow + @html + ''</table>'';    
+     ';
+ 
+-  EXEC sys.sp_executesql @realQuery, N'@html nvarchar(MAX) OUTPUT', @html=@html OUTPUT
+-END
++  EXEC sys.sp_executesql @realQuery, N'@html nvarchar(MAX) OUTPUT', @html=@html OUTPUT--, @RecordCount = @@ROWCOUNT
++END 
+ GO
+diff --git a/Tables/dbo.Oracle_DJ_BOM.sql b/Tables/dbo.Oracle_DJ_BOM.sql
+index cdb505c..221bbde 100644
+--- a/Tables/dbo.Oracle_DJ_BOM.sql
++++ b/Tables/dbo.Oracle_DJ_BOM.sql
+@@ -49,5 +49,7 @@
+ GO
+ ALTER TABLE [dbo].[Oracle_DJ_BOM] ADD CONSTRAINT [PK_Oracle_DJ_BOM] PRIMARY KEY CLUSTERED  ([unique_id]) ON [PRIMARY]
+ GO
++CREATE NONCLUSTERED INDEX [IX_OracleDjBom] ON [dbo].[Oracle_DJ_BOM] ([assembly_item]) INCLUDE ([component_item], [count_per_uom], [operation_seq_num], [quantity_issued], [wip_entity_name]) ON [PRIMARY]
++GO
+ DENY DELETE ON  [dbo].[Oracle_DJ_BOM] TO [NAA\SPB_Scheduling_RW]
+ GO
+diff --git a/Tables/dbo.Oracle_Onhand.sql b/Tables/dbo.Oracle_Onhand.sql
+index b77c265..d8dd48c 100644
+--- a/Tables/dbo.Oracle_Onhand.sql
++++ b/Tables/dbo.Oracle_Onhand.sql
+@@ -39,7 +39,5 @@
+ GO
+ ALTER TABLE [dbo].[Oracle_Onhand] ADD CONSTRAINT [PK_Oracle_onhand] PRIMARY KEY CLUSTERED  ([unique_id]) ON [PRIMARY]
+ GO
+-ALTER TABLE [dbo].[Oracle_Onhand] ENABLE CHANGE_TRACKING WITH (TRACK_COLUMNS_UPDATED = ON)
+-GO
+ DENY DELETE ON  [dbo].[Oracle_Onhand] TO [NAA\SPB_Scheduling_RW]
+ GO
+diff --git a/Tables/dbo.Oracle_Orders.sql b/Tables/dbo.Oracle_Orders.sql
+index 0ed731f..933fc00 100644
+--- a/Tables/dbo.Oracle_Orders.sql
++++ b/Tables/dbo.Oracle_Orders.sql
+@@ -83,5 +83,7 @@
+ GO
+ ALTER TABLE [dbo].[Oracle_Orders] ADD CONSTRAINT [PK_Oracle_Orders] PRIMARY KEY CLUSTERED  ([master_schedule_id]) ON [PRIMARY]
+ GO
++CREATE NONCLUSTERED INDEX [IX_Oracle_Orders] ON [dbo].[Oracle_Orders] ([assembly_item]) ON [PRIMARY]
++GO
+ DENY DELETE ON  [dbo].[Oracle_Orders] TO [NAA\SPB_Scheduling_RW]
+ GO
+diff --git a/Tables/dbo.Oracle_USAC_PO_SO.sql b/Tables/dbo.Oracle_USAC_PO_SO.sql
+index c90263a..56a4148 100644
+--- a/Tables/dbo.Oracle_USAC_PO_SO.sql
++++ b/Tables/dbo.Oracle_USAC_PO_SO.sql
+@@ -64,3 +64,7 @@
+ GO
+ ALTER TABLE [dbo].[Oracle_USAC_PO_SO] ADD CONSTRAINT [PK_Oracle_USAC_PO_SO] PRIMARY KEY CLUSTERED  ([UNIQUE_ID]) ON [PRIMARY]
+ GO
++GRANT INSERT ON  [dbo].[Oracle_USAC_PO_SO] TO [NAA\SPB_Scheduling_RO]
++GO
++GRANT UPDATE ON  [dbo].[Oracle_USAC_PO_SO] TO [NAA\SPB_Scheduling_RO]
++GO
+diff --git a/Tables/dbo._report_3e_mrg_nonfiber.sql b/Tables/dbo._report_3e_mrg_nonfiber.sql
+index 0c06f19..d79ea52 100644
+--- a/Tables/dbo._report_3e_mrg_nonfiber.sql
++++ b/Tables/dbo._report_3e_mrg_nonfiber.sql
+@@ -1,30 +1,30 @@
+ CREATE TABLE [dbo].[_report_3e_mrg_nonfiber]
+ (
+-[last_update_date] [datetime] NULL,
+-[StartDate] [nvarchar] (10) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+-[OrderLine] [nvarchar] (50) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+-[SchedDate] [nvarchar] (10) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+-[PromDate] [nvarchar] (10) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+-[Final_Assembly] [nvarchar] (50) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
++[last_update_date] [datetime] NOT NULL,
++[StartDate] [date] NULL,
++[OrderLine] [varchar] (max) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
++[SchedDate] [date] NULL,
++[PromDate] [date] NULL,
++[Final_Assembly] [varchar] (50) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+ [Required] [float] NULL,
+-[ScheduleApproved] [nvarchar] (30) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+-[Item] [nvarchar] (50) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+-[CustomerName] [nvarchar] (360) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
++[ScheduleApproved] [varchar] (30) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
++[Item] [varchar] (max) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
++[CustomerName] [varchar] (360) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+ [OrderQty] [float] NULL,
+-[Department] [nvarchar] (1000) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+-[OpID] [nvarchar] (20) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
++[Department] [varchar] (max) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
++[OpID] [varchar] (max) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+ [CountPerUOM_NotRolledUp] [float] NULL,
+ [CompQtyPer_NotRolledUp] [float] NULL,
+-[Scheduler] [nvarchar] (50) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+-[OffsetWeekStart] [nvarchar] (10) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+-[OffsetMonthYear] [nvarchar] (8) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
++[Scheduler] [varchar] (50) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
++[OffsetWeekStart] [date] NULL,
++[OffsetMonthYear] [nvarchar] (7) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+ [SumOfStartUp_Scrap] [float] NULL,
+-[DJ] [nvarchar] (50) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+-[DJ_Status] [nvarchar] (50) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+-[ComponentUOM] [nvarchar] (10) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+-[UOM] [nvarchar] (50) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+-[JobID] [nvarchar] (50) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+-[ReportSource] [nvarchar] (20) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
++[DJ] [varchar] (240) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
++[DJ_Status] [varchar] (80) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
++[ComponentUOM] [varchar] (3) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
++[UOM] [varchar] (50) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
++[JobID] [varchar] (max) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
++[ReportSource] [int] NULL,
+ [StartDateTime] [datetime] NULL
+-) ON [PRIMARY]
++) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+ GO
+diff --git a/Tables/dbo._report_3f_mrg_fiber.sql b/Tables/dbo._report_3f_mrg_fiber.sql
+index e0bd6db..203dd55 100644
+--- a/Tables/dbo._report_3f_mrg_fiber.sql
++++ b/Tables/dbo._report_3f_mrg_fiber.sql
+@@ -1,26 +1,26 @@
+ CREATE TABLE [dbo].[_report_3f_mrg_fiber]
+ (
+-[last_update_date] [datetime] NULL,
+-[StartDate] [nvarchar] (10) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+-[OrderLine] [nvarchar] (50) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+-[SchedDate] [nvarchar] (10) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+-[PromDate] [nvarchar] (10) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+-[Final_Assembly] [nvarchar] (50) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
++[last_update_date] [datetime] NOT NULL,
++[StartDate] [date] NULL,
++[OrderLine] [varchar] (max) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
++[SchedDate] [date] NULL,
++[PromDate] [date] NULL,
++[Final_Assembly] [varchar] (50) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+ [FiberKM] [float] NULL,
+-[ScheduleApproved] [nvarchar] (30) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+-[FiberItem] [nvarchar] (50) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+-[CustomerName] [nvarchar] (360) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
++[ScheduleApproved] [varchar] (30) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
++[FiberItem] [varchar] (max) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
++[CustomerName] [varchar] (360) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+ [OrderQty] [float] NULL,
+-[Department] [nvarchar] (1000) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
++[Department] [varchar] (max) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+ [UnitsPerFG] [float] NULL,
+-[Scheduler] [nvarchar] (50) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+-[OffsetWeekStart] [nvarchar] (10) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+-[OffsetMonthYear] [nvarchar] (8) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
++[Scheduler] [varchar] (50) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
++[OffsetWeekStart] [date] NULL,
++[OffsetMonthYear] [nvarchar] (7) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+ [SumOfStartUp_Scrap] [float] NULL,
+-[ComponentUOM] [nvarchar] (10) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+-[UOM] [nvarchar] (50) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+-[JobID] [nvarchar] (50) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+-[ReportSource] [nvarchar] (20) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
++[ComponentUOM] [varchar] (3) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
++[UOM] [varchar] (50) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
++[JobID] [varchar] (max) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
++[ReportSource] [int] NULL,
+ [StartDateTime] [datetime] NULL
+-) ON [PRIMARY]
++) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+ GO
+diff --git a/Views/Scheduling.vLateOrders.sql b/Views/Scheduling.vLateOrders.sql
+index 5d16ae4..7dcdeb9 100644
+--- a/Views/Scheduling.vLateOrders.sql
++++ b/Views/Scheduling.vLateOrders.sql
+@@ -17,7 +17,7 @@
+ SELECT DISTINCT  order_number, I.customer_name, assembly_item, pri_uom_order_qty, order_scheduled_end_date,promise_date,
+ CASE WHEN promise_date < schedule_ship_date THEN schedule_ship_date END Recommit,
+  DATEDIFF(MM,promise_date,schedule_ship_date) PromiseDeltaMonths
+-, late_order, I.schedule_approved
++, late_order, I.schedule_approved, K.last_update_date
+ FROM dbo._report_4a_production_master_schedule K INNER JOIN (SELECT customer_name, conc_order_number,assembly_item,pri_uom_order_qty, schedule_approved FROM  dbo.Oracle_Orders) I ON I.conc_order_number = K.order_number
+ WHERE promise_date < order_scheduled_end_date AND late_order = 'Y'
+ GO
+diff --git a/Views/Scheduling.vMissingMaterialDemand.sql b/Views/Scheduling.vMissingMaterialDemand.sql
+new file mode 100644
+index 0000000..2db86c5
+--- /dev/null
++++ b/Views/Scheduling.vMissingMaterialDemand.sql
+@@ -0,0 +1,30 @@
++SET QUOTED_IDENTIFIER ON
++GO
++SET ANSI_NULLS ON
++GO
++
++/*
++Author:		Bryan Eddy
++Desc:		View to show items with materials not assigned to an operation passing to the APS system
++Date:		5/16/2018
++Version:	1
++Update:		n/a
++*/
++
++CREATE VIEW [Scheduling].[vMissingMaterialDemand]
++AS
++
++
++WITH cteRoutes
++AS(
++	SELECT *
++	FROM Setup.vRoutesUnion
++	WHERE pass_to_aps <> 'N'
++)
++SELECT B.item_number,B.comp_item, CAST(B.item_seq AS INT) item_seq,CAST(B.opseq AS INT) AS Bom_Op_Seq, R.operation_seq_num AS Route_Op_Seq, I.inventory_item_status_code, B.wip_entity_name
++FROM Setup.vBomUnion B LEFT JOIN cteRoutes R ON R.item_number = B.item_number AND B.opseq = R.operation_seq_num AND B.alternate_bom_designator = R.alternate_routing_designator
++	AND R.wip_entity_name = B.wip_entity_name
++	INNER JOIN dbo.Oracle_Items I ON B.item_number = I.item_number
++WHERE R.item_number IS NULL AND B.comp_qty_per <> 0 AND I.inventory_item_status_code NOT IN ('obsolete','cab review')
++--ORDER BY I.inventory_item_status_code
++GO
+diff --git a/Views/Setup.vBomUnion.sql b/Views/Setup.vBomUnion.sql
+index de6a978..eccbc3a 100644
+--- a/Views/Setup.vBomUnion.sql
++++ b/Views/Setup.vBomUnion.sql
+@@ -2,14 +2,6 @@
+ GO
+ SET ANSI_NULLS ON
+ GO
+-
+-
+-
+-
+-
+-
+-
+-
+ /*
+ Author:		Bryan Eddy
+ Date:		2/5/2018
+@@ -21,12 +13,12 @@
+ CREATE VIEW [Setup].[vBomUnion]
+ AS 
+ 
+-SELECT item_number, comp_item, comp_qty_per, opseq, alternate_bom_designator, count_per_uom, '1' AS wip_entity_name
++SELECT item_number, comp_item, comp_qty_per, opseq, alternate_bom_designator, count_per_uom, '1' AS wip_entity_name, item_seq
+ FROM dbo.Oracle_BOMs
+ 
+ 
+ UNION
+ 
+-SELECT assembly_item, component_item, quantity_issued ,operation_seq_num,'Primary', count_per_uom, wip_entity_name
++SELECT assembly_item, component_item, quantity_issued ,operation_seq_num,'Primary', count_per_uom, wip_entity_name, NULL
+ FROM dbo.Oracle_DJ_BOM
+ GO
+diff --git a/Views/Setup.vExclusionItemList.sql b/Views/Setup.vExclusionItemList.sql
+index 0b5a9d8..d15ca7e 100644
+--- a/Views/Setup.vExclusionItemList.sql
++++ b/Views/Setup.vExclusionItemList.sql
+@@ -11,14 +11,14 @@
+ 
+ 
+ 
++
++
+ /*
+ Author:			Bryan Eddy
+ Date:			12/17/2017
+ Description:	An exclusion list for PlanetTogether to prevent orders from erroring out during import/refresh
+-Version:		5
+-Update:			Update exclusion list to not show items with DJ's
+-
+-
++Version:		6
++Update:			Update exclusion list to included items in the missing material demand report and where those items are used
+ 
+ */
+ 
+@@ -35,6 +35,12 @@
+ 	UNION	
+ 	SELECT G.item_number--,NULL
+ 	FROM dbo.APS_ProductClass_ToExclude_HardCoded K INNER JOIN dbo.Oracle_Items G ON G.product_class = K.ExcludedProductClass
++	UNION 
++	SELECT DISTINCT E.AssemblyItemNumber
++	FROM Scheduling.vMissingMaterialDemand CROSS APPLY Setup.fn_WhereUsedStdAndDJ(item_number) E
++	UNION
++	SELECT DISTINCT item_number
++	FROM Scheduling.vMissingMaterialDemand 
+ )
+ SELECT k.ItemNumber, I.inventory_item_status_code, I.product_class
+ FROM cteExcludedItems k LEFT JOIN dbo.Oracle_Items I ON I.item_number = K.ItemNumber

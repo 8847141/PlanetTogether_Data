@@ -83,5 +83,7 @@ CREATE TABLE [dbo].[Oracle_Orders]
 GO
 ALTER TABLE [dbo].[Oracle_Orders] ADD CONSTRAINT [PK_Oracle_Orders] PRIMARY KEY CLUSTERED  ([master_schedule_id]) ON [PRIMARY]
 GO
+CREATE NONCLUSTERED INDEX [IX_Oracle_Orders] ON [dbo].[Oracle_Orders] ([assembly_item]) ON [PRIMARY]
+GO
 DENY DELETE ON  [dbo].[Oracle_Orders] TO [NAA\SPB_Scheduling_RW]
 GO

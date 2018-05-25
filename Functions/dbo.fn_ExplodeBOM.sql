@@ -25,7 +25,8 @@ RETURNS
    layer_id INT NULL,
    count_per_uom INT,
    alternate_designator  NVARCHAR(10),
-   FinishedGoodOpSeq smallint
+   FinishedGoodOpSeq SMALLINT, 
+   INDEX IX1 NONCLUSTERED(item_number, comp_item)
 
 )
 AS

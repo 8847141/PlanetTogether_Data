@@ -11,8 +11,8 @@ GO
 -- Author:		Bryan Eddy
 -- Create date: 10/6/2017
 -- Description:	Run all major operations for setup and item attributes
--- Version: 1
--- Update: n/a
+-- Version: 2	
+-- Update: Added MES attribute procedure to the master run
 -- =============================================
 CREATE PROCEDURE [Scheduling].[usp_MasterDailyProcedureRun]
 AS
@@ -35,6 +35,8 @@ BEGIN
 	EXEC Scheduling.usp_MachineCapabilitySchedulerUpdate
 
 	EXEC [Setup].[usp_GetFiberCountByOperation] @RunType = 2
+
+	EXEC mes.usp_GetItemAttributes
 
 END
 

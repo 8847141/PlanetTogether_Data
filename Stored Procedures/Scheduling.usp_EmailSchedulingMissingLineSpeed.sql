@@ -9,8 +9,8 @@ GO
 -- Author:		Bryan Eddy
 -- ALTER date: 6/12/17
 -- Description:	Send email of missing line speeds to Process Engineers
--- Version:		9
--- Update:		Removed the Q & K operations from being filtered.  Changed to filtering out "INSPEC" operations.
+-- Version:		10
+-- Update:		Added logic to produce only a single missing setup for each record
 -- =============================================
 CREATE PROC [Scheduling].[usp_EmailSchedulingMissingLineSpeed]
 
@@ -95,10 +95,17 @@ as(
 		FROM cteMissingSetupOrders
 		--WHERE	
 	)
-SELECT DISTINCT FinishedGood,Item,ItemDesc, CAST(need_by_date AS DATE) need_by_date, item_number, Setup, PrimaryAlt,department_code, SoLinesMissingSetups
+	,cteMaxItem
+AS(
+	SELECT DISTINCT FinishedGood,ItemDesc, CAST(need_by_date AS DATE) need_by_date, Setup, PrimaryAlt,department_code, SoLinesMissingSetups
+	, MAX(ITEM) OVER (PARTITION BY setup) MaxItem, e.Item
+	FROM cteConsolidatedMissingSetupOrders e
+	WHERE Max_SechuduleDate = need_by_date
+)
+SELECT DISTINCT FinishedGood,Item,ItemDesc, need_by_date, Setup, PrimaryAlt,department_code, SoLinesMissingSetups
 INTO #Results
-FROM cteConsolidatedMissingSetupOrders
-WHERE Max_SechuduleDate = need_by_date
+FROM cteMaxItem
+WHERE cteMaxItem.MaxItem = Item
 
 --SELECT *
 --FROM #Results

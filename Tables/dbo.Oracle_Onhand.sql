@@ -39,7 +39,5 @@ AS
 GO
 ALTER TABLE [dbo].[Oracle_Onhand] ADD CONSTRAINT [PK_Oracle_onhand] PRIMARY KEY CLUSTERED  ([unique_id]) ON [PRIMARY]
 GO
-ALTER TABLE [dbo].[Oracle_Onhand] ENABLE CHANGE_TRACKING WITH (TRACK_COLUMNS_UPDATED = ON)
-GO
 DENY DELETE ON  [dbo].[Oracle_Onhand] TO [NAA\SPB_Scheduling_RW]
 GO

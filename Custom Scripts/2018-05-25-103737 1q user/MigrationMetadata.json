@@ -1,0 +1,91 @@
+{
+  "Id": "3c4d7606-132f-4537-8baa-8a2a42c63937",
+  "Name": "Script created at 2018-05-25 10:30.",
+  "ObjectIds": [
+    {
+      "Name": "Oracle_DJ_BOM",
+      "Owner": "dbo",
+      "ObjectType": "Table"
+    },
+    {
+      "Name": "Oracle_Onhand",
+      "Owner": "dbo",
+      "ObjectType": "Table"
+    },
+    {
+      "Name": "Oracle_Orders",
+      "Owner": "dbo",
+      "ObjectType": "Table"
+    },
+    {
+      "Name": "Oracle_USAC_PO_SO",
+      "Owner": "dbo",
+      "ObjectType": "Table"
+    },
+    {
+      "Name": "_report_3e_mrg_nonfiber",
+      "Owner": "dbo",
+      "ObjectType": "Table"
+    },
+    {
+      "Name": "_report_3f_mrg_fiber",
+      "Owner": "dbo",
+      "ObjectType": "Table"
+    },
+    {
+      "Name": "EmailAlertMissingMaterialDemand",
+      "Owner": "Scheduling",
+      "ObjectType": "StoredProcedure"
+    },
+    {
+      "Name": "usp_EmailMasterAlert",
+      "Owner": "Scheduling",
+      "ObjectType": "StoredProcedure"
+    },
+    {
+      "Name": "usp_EmailMfgHoldAlert",
+      "Owner": "Scheduling",
+      "ObjectType": "StoredProcedure"
+    },
+    {
+      "Name": "usp_EmailSchedulingMissingLineSpeed",
+      "Owner": "Scheduling",
+      "ObjectType": "StoredProcedure"
+    },
+    {
+      "Name": "usp_MasterDailyProcedureRun",
+      "Owner": "Scheduling",
+      "ObjectType": "StoredProcedure"
+    },
+    {
+      "Name": "usp_QueryToHtmlTable",
+      "Owner": "Scheduling",
+      "ObjectType": "StoredProcedure"
+    },
+    {
+      "Name": "vLateOrders",
+      "Owner": "Scheduling",
+      "ObjectType": "View"
+    },
+    {
+      "Name": "vMissingMaterialDemand",
+      "Owner": "Scheduling",
+      "ObjectType": "View"
+    },
+    {
+      "Name": "vBomUnion",
+      "Owner": "Setup",
+      "ObjectType": "View"
+    },
+    {
+      "Name": "vExclusionItemList",
+      "Owner": "Setup",
+      "ObjectType": "View"
+    },
+    {
+      "Name": "fn_ExplodeBOM",
+      "Owner": "dbo",
+      "ObjectType": "Function_UserDefinedFunction_Table"
+    }
+  ]
+}

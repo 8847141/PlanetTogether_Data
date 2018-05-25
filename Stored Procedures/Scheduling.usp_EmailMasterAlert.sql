@@ -7,6 +7,8 @@ GO
 /*	Author:	Bryan Eddy
 	Date:	11/18/2017
 	Desc:	Master scheduling alert that has been added to the daily run job.	
+	Version:	2
+	Update:		Added email alert for missing material demand
 */
 
 CREATE PROCEDURE [Scheduling].[usp_EmailMasterAlert]
@@ -19,6 +21,8 @@ BEGIN
 	EXEC [Setup].[usp_EmailMissingDjSetup]
 
 	EXEC Scheduling.usp_EmailSchedulingMissingLineSpeed
+
+	EXEC Scheduling.EmailAlertMissingMaterialDemand
 
 END
 GO
