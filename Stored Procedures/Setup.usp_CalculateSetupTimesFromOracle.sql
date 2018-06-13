@@ -8,6 +8,7 @@ GO
 
 
 
+
 -- =============================================
 -- Author:      Bryan Eddy
 -- Create date: 8/14/2017
@@ -385,10 +386,43 @@ DECLARE @ErrorLine INT = ERROR_LINE();
 		THROW;
 	END CATCH;
 
+
+	
+	--Catch all.  Inserts a value of 0 for any attributes without a value
+	BEGIN TRY
+		BEGIN TRAN
+		;WITH cteSetupTimesCalculated
+		AS(
+			SELECT Setup, AttributeNameID, MachineID
+			FROM            Setup.vSetupTimesItem 
+		),
+		cteMachineGroupAttributes
+		AS(
+		SELECT DISTINCT i.*, S.Setup, AttributeName, g.AttributeNameID, g.PassToAps, g.ValueTypeID, S.Item
+		FROM                    setup.MachineGroupAttributes g INNER JOIN
+								 Setup.MachineNames AS I ON I.MachineGroupID = G.MachineGroupID
+								INNER JOIN Setup.vSetupLineSpeed S ON S.MachineID = I.MachineID
+								INNER JOIN Setup.ApsSetupAttributes P ON P.AttributeNameID = g.AttributeNameID
+
+		)
+		INSERT INTO setup.AttributeSetupTimeItem (Item_Number,[Setup],[MachineGroupID],MachineID,AttributeNameID,[SetupAttributeValue],[SetupTime])
+		SELECT DISTINCT G.Item,G.Setup,G.MachineGroupID,G.MachineID, g.AttributeNameID, 0, 0
+		FROM cteMachineGroupAttributes G LEFT JOIN  cteSetupTimesCalculated I ON I.Setup = G.Setup AND I.MachineID = G.MachineID  AND      I.AttributeNameID = G.AttributeNameID             
+		WHERE  i.setup IS NULL AND G.PassToAps = 1
+	COMMIT TRAN
+	END TRY
+	BEGIN CATCH
+		ROLLBACK TRANSACTION;
+		IF @@TRANCOUNT > 0
+
+		PRINT 'Actual error number: ' + CAST(@ErrorNumber AS VARCHAR(10));
+		PRINT 'Actual line number: ' + CAST(@ErrorLine AS VARCHAR(10));
+ 
+		THROW;
+	END CATCH;
+
+
 END
-
-
-
 
 
 
