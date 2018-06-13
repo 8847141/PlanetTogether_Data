@@ -2,8 +2,6 @@ SET QUOTED_IDENTIFIER ON
 GO
 SET ANSI_NULLS ON
 GO
-
-
 /*
 Author:		Bryan Eddy
 Date:		3/27/2018
@@ -12,7 +10,7 @@ Version:	1
 Update:		n/a
 */
 
-CREATE PROCEDURE [Setup].[GetItemSetupAttributes]
+CREATE PROC [Setup].[GetItemSetupAttributes]
 
 as
 
@@ -60,7 +58,7 @@ Gathering information for each setup
 				DROP TABLE #OD;
 				SELECT DISTINCT Setup, AttributeNameID,AttributeName,SetupAttributeValue AS OD, MachineID
 				INTO #OD
-				FROM Setup.vSetupTimesItem WHERE AttributeNameID = 3
+				FROM Setup.vSetupTimesItem WHERE AttributeNameID = 3 AND ISNUMERIC(SetupAttributeValue) = 1
 
 				--Get Jacket Material for each setup
 				IF OBJECT_ID(N'tempdb..#JacketMaterial', N'U') IS NOT NULL

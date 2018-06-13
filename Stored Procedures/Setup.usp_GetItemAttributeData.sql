@@ -15,8 +15,8 @@ GO
 -- Author:      Bryan Eddy
 -- Create date: 9/11/2017
 -- Description: Procedure insert data into Setup.ItemAttributes table for Oracle to pick up
--- Version: 2
--- Update:	Added update statement to identify if a binder exists in the Bom for the item.
+-- Version: 3
+-- Update:	Added condition to OD update statment to ensure the value is numeric
 -- =============================================
 
 CREATE PROCEDURE [Setup].[usp_GetItemAttributeData]
@@ -117,7 +117,7 @@ EXEC [Setup].usp_GetFiberCount @RunType = 2
 			UPDATE K
 			SET K.NominalOD = G.AttributeValue
 			FROM cteOD G INNER JOIN Setup.ItemAttributes K ON G.item_number = K.ItemNumber
-			WHERE RowNumber = 1 AND DATEDIFF(DAY,DateRevised,GETDATE()) = 0
+			WHERE RowNumber = 1 AND DATEDIFF(DAY,DateRevised,GETDATE()) = 0 AND ISNUMERIC(G.AttributeValue) = 1
 		COMMIT TRAN
 	END TRY
 	BEGIN CATCH

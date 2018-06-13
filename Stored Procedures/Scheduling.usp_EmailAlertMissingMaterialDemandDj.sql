@@ -10,7 +10,7 @@ Version:	1
 Update:		n/a
 */
 
-CREATE PROCEDURE [Scheduling].[EmailAlertMissingMaterialDemand]
+CREATE PROCEDURE [Scheduling].[usp_EmailAlertMissingMaterialDemandDj]
 AS
 BEGIN
 	DECLARE @html nvarchar(MAX),
@@ -25,23 +25,22 @@ BEGIN
 	  						WHERE K.ResponsibilityID = 21 FOR XML PATH('')),1,1,''))
 
 	SET @qry = 'SELECT item_number,
-       comp_item,
-       item_seq,
+       component_item,
        Bom_Op_Seq,
        Route_Op_Seq,
        inventory_item_status_code,
        wip_entity_name
-		FROM [Scheduling].[vMissingMaterialDemand]'
+		FROM [Scheduling].[vMissingMaterialDemandDj]'
 
 	EXEC sp_executesql @qry
 	IF @@ROWCOUNT > 0 
 		BEGIN
 
-		SET @body1 = N'<H1>Missing Material Demand Report</H1>' +
-				N'<H2 span style=''font-size:16.0pt;font-family:"Calibri","sans-serif";color:#EB3814''>Materials are not assigned to an operation passing into the APS system.</H2>' 
+		SET @body1 = N'<H1>Missing Material DJ Demand Report</H1>' +
+				N'<H2 span style=''font-size:16.0pt;font-family:"Calibri","sans-serif";color:#EB3814''>DJ Materials are not assigned to an operation passing into the APS system.</H2>' 
 	
 
-			SET @SubjectLine = 'Missing Material Demand' + CAST(GETDATE() AS NVARCHAR(50))
+			SET @SubjectLine = 'Missing Material Demand ' + CAST(GETDATE() AS NVARCHAR(50))
 			EXEC Scheduling.usp_QueryToHtmlTable @html = @html OUTPUT,  
 			@query =@qry, @orderBy = N'ORDER BY item_number'
 

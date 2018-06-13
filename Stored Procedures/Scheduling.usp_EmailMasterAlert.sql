@@ -22,7 +22,11 @@ BEGIN
 
 	EXEC Scheduling.usp_EmailSchedulingMissingLineSpeed
 
-	EXEC Scheduling.EmailAlertMissingMaterialDemand
+	EXEC Scheduling.usp_EmailAlertMissingMaterialDemand
+
+	EXEC [Scheduling].[usp_EmailAlertMissingMaterialDemandDj]
+
+	EXEC Scheduling.usp_EmailOrdersStaleMaterials
 
 END
 GO

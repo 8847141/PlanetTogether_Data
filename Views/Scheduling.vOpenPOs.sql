@@ -3,6 +3,7 @@ GO
 SET ANSI_NULLS ON
 GO
 
+
 /****** Script for SelectTopNRows command from SSMS  ******/
 /*
 Author:		Bryan Eddy
@@ -14,7 +15,7 @@ Update:		Removed negative open po qty parameter
 CREATE VIEW [Scheduling].[vOpenPOs]
 AS
 SELECT item_number, open_po_qty_primary, vendor_name, po_number,promised_date, need_by_date, primary_uom_code,category_name
-  FROM [PlanetTogether_Data_Prod].[dbo].[Oracle_POs]
+  FROM [dbo].[Oracle_POs]
   WHERE open_po_qty_primary > 0
 
 GO

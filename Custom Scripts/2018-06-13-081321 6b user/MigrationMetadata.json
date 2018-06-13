@@ -1,0 +1,126 @@
+{
+  "Id": "a856733c-6748-4815-9b26-48ece0e2a752",
+  "Name": "Script created at 2018-06-13 08:11.",
+  "ObjectIds": [
+    {
+      "Name": "_report_3b_specialty_order_detail",
+      "Owner": "dbo",
+      "ObjectType": "Table"
+    },
+    {
+      "Name": "_report_3c_acs_order_status_review",
+      "Owner": "dbo",
+      "ObjectType": "Table"
+    },
+    {
+      "Name": "_report_9a_bobbin_usage_release",
+      "Owner": "dbo",
+      "ObjectType": "Table"
+    },
+    {
+      "Name": "_report_9a_bobbin_usage_running_total",
+      "Owner": "dbo",
+      "ObjectType": "Table"
+    },
+    {
+      "Name": "EmailAlertMissingMaterialDemand",
+      "Owner": "Scheduling",
+      "ObjectType": "StoredProcedure"
+    },
+    {
+      "Name": "usp_EmailAlertMissingMaterialDemandDj",
+      "Owner": "Scheduling",
+      "ObjectType": "StoredProcedure"
+    },
+    {
+      "Name": "usp_EmailAlertMissingMaterialDemand",
+      "Owner": "Scheduling",
+      "ObjectType": "StoredProcedure"
+    },
+    {
+      "Name": "usp_EmailMasterAlert",
+      "Owner": "Scheduling",
+      "ObjectType": "StoredProcedure"
+    },
+    {
+      "Name": "usp_EmailMfgHoldAlert",
+      "Owner": "Scheduling",
+      "ObjectType": "StoredProcedure"
+    },
+    {
+      "Name": "usp_EmailOrdersStaleMaterials",
+      "Owner": "Scheduling",
+      "ObjectType": "StoredProcedure"
+    },
+    {
+      "Name": "GetItemSetupAttributes",
+      "Owner": "Setup",
+      "ObjectType": "StoredProcedure"
+    },
+    {
+      "Name": "usp_CalculateSetupTimesFromOracle",
+      "Owner": "Setup",
+      "ObjectType": "StoredProcedure"
+    },
+    {
+      "Name": "usp_GetItemAttributeData",
+      "Owner": "Setup",
+      "ObjectType": "StoredProcedure"
+    },
+    {
+      "Name": "vAlertMfgHold",
+      "Owner": "Scheduling",
+      "ObjectType": "View"
+    },
+    {
+      "Name": "vDjStatusConflict",
+      "Owner": "Scheduling",
+      "ObjectType": "View"
+    },
+    {
+      "Name": "vMissingMaterialDemandDj",
+      "Owner": "Scheduling",
+      "ObjectType": "View"
+    },
+    {
+      "Name": "vMissingMaterialDemand",
+      "Owner": "Scheduling",
+      "ObjectType": "View"
+    },
+    {
+      "Name": "vOpenPOs",
+      "Owner": "Scheduling",
+      "ObjectType": "View"
+    },
+    {
+      "Name": "vOrdersWithMaterialsNotOrderedInNineMonths",
+      "Owner": "Scheduling",
+      "ObjectType": "View"
+    },
+    {
+      "Name": "vSpecialOrders",
+      "Owner": "Scheduling",
+      "ObjectType": "View"
+    },
+    {
+      "Name": "vStaleMaterialsFlatByBuyer",
+      "Owner": "Scheduling",
+      "ObjectType": "View"
+    },
+    {
+      "Name": "vStaleMaterialsFlat",
+      "Owner": "Scheduling",
+      "ObjectType": "View"
+    },
+    {
+      "Name": "vStaleMaterials",
+      "Owner": "Scheduling",
+      "ObjectType": "View"
+    },
+    {
+      "Name": "vExcludedOrdersDetail",
+      "Owner": "Setup",
+      "ObjectType": "View"
+    }
+  ]
+}

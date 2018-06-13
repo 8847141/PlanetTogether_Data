@@ -7,6 +7,7 @@ GO
 
 
 
+
 -- =============================================
 -- Author:      Bryan Eddy
 -- Create date: 8/14/2017
@@ -244,13 +245,13 @@ DECLARE @ErrorLine INT = ERROR_LINE();
 		
 		BEGIN TRAN
 			INSERT INTO [Setup].AttributeSetupTimeItem (Item_Number,[Setup],[MachineGroupID],MachineID,AttributeNameID,[SetupAttributeValue],[SetupTime])
-			SELECT DISTINCT Item_Number,G.true_operation_code,I.[MachineGroupID],I.MachineID,8 AttributeNameID,null,FiberCount * TimeValue		--Calculates the TimeValue per fibercount and then inserts it for FiberSet for PT to pick up
+  			SELECT DISTINCT Item_Number,G.true_operation_code,I.[MachineGroupID],I.MachineID,8 AttributeNameID,K.FiberCount,K.FiberCount * TimeValue--, K.FiberCount, U.TimeValue, I.MachineName		--Calculates the TimeValue per fibercount and then inserts it for FiberSet for PT to pick up
 			FROM Setup.ItemAttributes K INNER JOIN dbo.Oracle_Routes G ON G.item_number = K.ItemNumber 
 			INNER JOIN #MachineCapability P ON P.Setup = G.true_operation_code
-			INNER JOIN Setup.AttributeMatrixVariableValue U ON U.AttributeValue = K.FiberCount AND P.MachineID = U.MachineID
+			INNER JOIN Setup.AttributeMatrixFixedValue U ON  P.MachineID = U.MachineID
 			INNER JOIN Setup.MachineGroupAttributes Y ON Y.AttributeNameID = U.AttributeNameID 
 			INNER JOIN Setup.MachineNames I ON I.MachineGroupID = Y.MachineGroupID AND U.MachineID = I.MachineID
-			WHERE ValueTypeID = 4 
+			WHERE ValueTypeID = 3 AND U.AttributeNameID = 7 AND I.MachineGroupID = 2
 		COMMIT TRAN
 	END TRY
 	BEGIN CATCH	

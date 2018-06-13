@@ -1,0 +1,715 @@
+diff --git a/Functions/Setup.fn_WhereUsedDj.sql b/Functions/Setup.fn_WhereUsedDj.sql
+new file mode 100644
+index 0000000..6d693de
+--- /dev/null
++++ b/Functions/Setup.fn_WhereUsedDj.sql
+@@ -0,0 +1,55 @@
++SET QUOTED_IDENTIFIER ON
++GO
++SET ANSI_NULLS ON
++GO
++/*
++Author:			Bryan Eddy
++Date:			3/16/18 
++Description:	Explode upwards to find where subcomponents are used in DJ's
++Revision:		1
++Update:			n/a
++
++
++*/
++
++CREATE FUNCTION [Setup].[fn_WhereUsedDj]
++(
++-- Input parameters
++   @ChildDj varchar(100)
++)
++returns
++@WhereUsed table
++(
++   ID INTEGER  IDENTITY(1,1) NOT null,
++   WhereUsedChildDj NVARCHAR(100),
++	ConcOrderNumber NVARCHAR(100),
++   ParentDj NVARCHAR(100) NULL,
++   ChildDj NVARCHAR(100),
++   AssembtlyItem NVARCHAR(100),
++   PRIMARY KEY (ID)
++)
++
++AS
++
++--CREATE INDEX IX_2 ON @WhereUsed (component)-- INCLUDE (assemblyitemnumber, ComponentItemNumber)
++BEGIN 
++      -- add current level
++   insert into @WhereUsed
++   select d.child_dj_number,d.conc_order_number, d.parent_dj_number, d.child_dj_number, d.assembly_item
++   from [dbo].Oracle_Orders d
++   --GROUP BY  ComponentItemNumber, AssemblyItemNumber,ComponentItemNumber
++   WHERE d.child_dj_number = @ChildDj --AND [EffectivityDateTo] IS NULL 
++   ;
++
++
++   -- --explode upward
++   insert into @WhereUsed
++   select c.WhereUsedChildDj, n.ConcOrderNumber, n.ParentDj,n.ChildDj,n.AssembtlyItem
++   from @WhereUsed c
++   cross apply setup.fn_WhereUsedDj(C.ParentDj) n
++   --GROUP BY c.Component, n.AssemblyItemNumber,n.ComponentItemNumber,n.ComponentQuantity
++   --HAVING c.AssemblyItemNumber <> n.AssemblyItemNumber
++   return
++END 
++
++GO
+diff --git a/Stored Procedures/Scheduling.usp_EmailOrdersStaleMaterials.sql b/Stored Procedures/Scheduling.usp_EmailOrdersStaleMaterials.sql
+new file mode 100644
+index 0000000..16a7ba3
+--- /dev/null
++++ b/Stored Procedures/Scheduling.usp_EmailOrdersStaleMaterials.sql
+@@ -0,0 +1,36 @@
++SET QUOTED_IDENTIFIER ON
++GO
++SET ANSI_NULLS ON
++GO
++/*
++Author:		Bryan Eddy
++Date:		4/4/2018
++Desc:		Alert of materials that haven't been orderd in more than 9 months
++Version:	1
++Update:		n/a
++
++*/
++
++CREATE PROCEDURE [Scheduling].[usp_EmailOrdersStaleMaterials]
++AS
++BEGIN
++	DECLARE @html nvarchar(MAX),
++	@SubjectLine NVARCHAR(1000)
++
++	SET @SubjectLine = 'Orders with Stale Materials ' + CAST(GETDATE() AS NVARCHAR(50))
++	EXEC Scheduling.usp_QueryToHtmlTable @html = @html OUTPUT,  
++	@query = N'SELECT * FROM Scheduling.vOrdersWithMaterialsNotOrderedInNineMonths', @orderBy = N'ORDER BY order_number';
++
++
++					EXEC msdb.dbo.sp_send_dbmail 
++					@recipients='Jeff.Gilfillan@aflglobal.com; Rich.DiDonato@aflglobal.com',
++					--@recipients = 'bryan.eddy@aflglobal.com',
++					--@blind_copy_recipients =  @BlindRecipientlist, --@ReceipientList
++					@blind_copy_recipients = 'bryan.eddy@aflglobal.com',
++					@subject = @SubjectLine,
++					@body = @html,
++					@body_format = 'HTML',
++					@query_no_truncate = 1,
++					@attach_query_result_as_file = 0;
++END
++GO
+diff --git a/Stored Procedures/Setup.GetItemSetupAttributes.sql b/Stored Procedures/Setup.GetItemSetupAttributes.sql
+new file mode 100644
+index 0000000..b2c7a5e
+--- /dev/null
++++ b/Stored Procedures/Setup.GetItemSetupAttributes.sql
+@@ -0,0 +1,151 @@
++SET QUOTED_IDENTIFIER ON
++GO
++SET ANSI_NULLS ON
++GO
++
++
++/*
++Author:		Bryan Eddy
++Date:		3/27/2018
++Desc:		Create a table to pull setup attributes from for reporting
++Version:	1
++Update:		n/a
++*/
++
++CREATE PROCEDURE [Setup].[GetItemSetupAttributes]
++
++as
++
++/*
++Getting setup parameters from setup information for reporting
++*/
++
++BEGIN
++	SET NOCOUNT ON;
++
++	DECLARE @ErrorNumber INT = ERROR_NUMBER();
++	DECLARE @ErrorLine INT = ERROR_LINE();
++
++
++	/*Insert/Add all setups for each item*/
++	BEGIN TRY
++		BEGIN TRAN
++			INSERT INTO Setup.ItemSetupAttributes(ItemNumber,Setup)
++			SELECT DISTINCT R.item_number, R.true_operation_code
++			FROM Setup.vRoutesUnion R LEFT JOIN SETUP.ItemSetupAttributes K ON K.ItemNumber = R.item_number AND R.true_operation_code = K.Setup
++			WHERE K.ItemNumber IS NULL AND R.true_operation_code IS NOT NULL
++		COMMIT TRAN
++	END TRY
++	BEGIN CATCH
++		IF @@TRANCOUNT > 0
++		ROLLBACK TRANSACTION;
++ 
++		PRINT 'Actual error number: ' + CAST(@ErrorNumber AS VARCHAR(10));
++		PRINT 'Actual line number: ' + CAST(@ErrorLine AS VARCHAR(10));
++ 
++		THROW;
++	END CATCH;
++
++
++
++/*
++Pivot the results from the Setup.vSetupTimesItem by building a temp table 
++Gathering information for each setup
++*/
++
++	BEGIN TRY
++		BEGIN TRAN
++		--Get Od for each setup
++				IF OBJECT_ID(N'tempdb..#OD', N'U') IS NOT NULL
++				DROP TABLE #OD;
++				SELECT DISTINCT Setup, AttributeNameID,AttributeName,SetupAttributeValue AS OD, MachineID
++				INTO #OD
++				FROM Setup.vSetupTimesItem WHERE AttributeNameID = 3
++
++				--Get Jacket Material for each setup
++				IF OBJECT_ID(N'tempdb..#JacketMaterial', N'U') IS NOT NULL
++				DROP TABLE #JacketMaterial;
++				SELECT DISTINCT Setup, AttributeNameID,AttributeName,SetupAttributeValue AS JacketMaterial, MachineID
++				INTO #JacketMaterial
++				FROM Setup.vSetupTimesItem WHERE AttributeNameID = 5
++
++				--Get number for core positions for cabling setups
++				IF OBJECT_ID(N'tempdb..#CorePositions', N'U') IS NOT NULL
++				DROP TABLE #CorePositions;
++				SELECT DISTINCT Setup, AttributeNameID,AttributeName,SetupAttributeValue AS NumberCorePositions, MachineID
++				INTO #CorePositions
++				FROM Setup.vSetupTimesItem WHERE AttributeNameID = 17
++
++				IF OBJECT_ID(N'tempdb..#Aramid', N'U') IS NOT NULL
++				DROP TABLE #Aramid;
++				SELECT DISTINCT Setup, AttributeNameID,AttributeName,SetupAttributeValue AS EndsOfAramid, MachineID
++				INTO #Aramid
++				FROM Setup.vSetupTimesItem WHERE AttributeNameID = 28
++
++
++
++				--Insert information from the temp tables into 
++				;WITH cteSetupAttributes
++				AS(
++				SELECT DISTINCT M.SETUP, OD, j.JacketMaterial, N.NumberCorePositions, A.EndsOfAramid
++				FROM SETUP.vMachineCapability M LEFT JOIN #JacketMaterial J ON J.Setup = M.Setup
++				LEFT JOIN #OD O ON o.Setup = M.setup 
++				LEFT JOIN #CorePositions N ON N.Setup = M.Setup 
++				INNER JOIN Setup.ItemSetupAttributes  S ON  S.Setup = M.Setup
++				LEFT JOIN #Aramid A ON A.SETUP = M.Setup
++				)
++				UPDATE  Setup.ItemSetupAttributes
++				SET NominalOD = od, NumberCorePositions = g.NumberCorePositions, JacketMaterial = g.JacketMaterial,
++				EndsOfAramid = g.EndsOfAramid
++				FROM cteSetupAttributes g INNER JOIN Setup.ItemSetupAttributes k ON k.setup = g.Setup
++		COMMIT TRAN
++	END TRY
++	BEGIN CATCH
++		IF @@TRANCOUNT > 0
++		ROLLBACK TRANSACTION;
++ 
++		PRINT 'Actual error number: ' + CAST(@ErrorNumber AS VARCHAR(10));
++		PRINT 'Actual line number: ' + CAST(@ErrorLine AS VARCHAR(10));
++ 
++		THROW;
++	END CATCH;
++
++
++--Get UJCM for each cabling operation
++	BEGIN TRY
++		BEGIN TRAN
++			;WITH cteUJCM
++			AS(
++				SELECT DISTINCT Setup, B.comp_item as UJCM
++				--,COUNT(B.comp_item) OVER (PARTITION BY M.Setup,comp_item, r.alternate_routing_designator, R.wip_entity_name) AS UjcmCount
++				, B.item_number
++				FROM dbo.Oracle_Routes R INNER JOIN Setup.vMachineCapability M ON M.Setup = R.true_operation_code
++				INNER JOIN Setup.MachineNames C ON C.MachineID = M.MachineID 
++				INNER JOIN dbo.Oracle_BOMs B ON B.alternate_bom_designator = R.alternate_routing_designator AND B.opseq = R.operation_seq_num AND B.item_number = R.item_number
++				INNER JOIN dbo.Oracle_Items I ON I.item_number = B.comp_item
++				WHERE C.MachineGroupID = 13 AND I.product_class LIKE 'Cable.%.Raw Material.Filler.UJCM' 
++			)
++			,cteItemUjcm
++			AS(
++				SELECT *, ROW_NUMBER() OVER (PARTITION BY cteUJCM.Setup, cteUJCM.item_number ORDER BY cteUJCM.UJCM DESC) AS RowNumber
++				--INTO #Ujcm
++				FROM cteUJCM
++			)
++			UPDATE G 
++			SET UJCM =  k.UJCM
++			FROM cteItemUjcm k INNER JOIN Setup.ItemSetupAttributes g ON g.Setup = k.Setup AND g.ItemNumber = k.item_number
++			WHERE k.RowNumber =1
++		COMMIT TRAN
++	END TRY
++	BEGIN CATCH
++		IF @@TRANCOUNT > 0
++		ROLLBACK TRANSACTION;
++ 
++		PRINT 'Actual error number: ' + CAST(@ErrorNumber AS VARCHAR(10));
++		PRINT 'Actual line number: ' + CAST(@ErrorLine AS VARCHAR(10));
++ 
++		THROW;
++	END CATCH;
++
++END
++GO
+diff --git a/Tables/Setup.ItemSetupAttributes.sql b/Tables/Setup.ItemSetupAttributes.sql
+new file mode 100644
+index 0000000..ee62615
+--- /dev/null
++++ b/Tables/Setup.ItemSetupAttributes.sql
+@@ -0,0 +1,50 @@
++CREATE TABLE [Setup].[ItemSetupAttributes]
++(
++[Setup] [nvarchar] (50) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
++[ItemNumber] [nvarchar] (50) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
++[NominalOD] [decimal] (8, 5) NULL,
++[NumberCorePositions] [int] NULL,
++[UJCM] [nvarchar] (50) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
++[DateCreated] [datetime] NULL CONSTRAINT [DF__ItemSetup__DateC__5C02A283] DEFAULT (getdate()),
++[DateRevised] [datetime] NULL CONSTRAINT [DF__ItemSetup__DateR__5CF6C6BC] DEFAULT (getdate()),
++[JacketMaterial] [nvarchar] (50) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
++[ItemSetupID] [uniqueidentifier] NOT NULL CONSTRAINT [DF__ItemSetup__ItemS__5DEAEAF5] DEFAULT (newid()),
++[EndsOfAramid] [int] NULL
++) ON [PRIMARY]
++GO
++SET QUOTED_IDENTIFIER ON
++GO
++SET ANSI_NULLS ON
++GO
++-- =============================================
++-- Author:		Bryan Eddy
++-- Create date: 3/27/2018
++-- Description:	Update the date revised and revised by when a record is updated
++-- Rev: 1
++-- Update: Initial creation
++-- =============================================
++CREATE TRIGGER [Setup].[trg_RevisedItemSetupAttribute] 
++   ON  [Setup].[ItemSetupAttributes] 
++   AFTER UPDATE
++AS 
++BEGIN
++	-- SET NOCOUNT ON added to prevent extra result sets from
++	-- interfering with SELECT statements.
++	SET NOCOUNT ON;
++
++		IF  NOT(UPDATE(DateRevised))
++			BEGIN
++			  UPDATE t
++			  SET  t.DateRevised= GETDATE() --, t.RevisedBy = (SUSER_SNAME()) 
++			  FROM setup.ItemSetupAttributes  as t
++			  JOIN inserted i
++			  ON I.ItemSetupID = t.ItemSetupID 
++		END 
++
++END
++
++GO
++ALTER TABLE [Setup].[ItemSetupAttributes] ADD CONSTRAINT [PK_SetupAttributes] PRIMARY KEY CLUSTERED  ([ItemSetupID]) ON [PRIMARY]
++GO
++ALTER TABLE [Setup].[ItemSetupAttributes] ADD CONSTRAINT [IX_ItemSetupAttributes] UNIQUE NONCLUSTERED  ([Setup], [ItemNumber]) ON [PRIMARY]
++GO
+diff --git a/Tables/dbo.Oracle_DJ_Processing_Times.sql b/Tables/dbo.Oracle_DJ_Processing_Times.sql
+new file mode 100644
+index 0000000..e094bbb
+--- /dev/null
++++ b/Tables/dbo.Oracle_DJ_Processing_Times.sql
+@@ -0,0 +1,19 @@
++CREATE TABLE [dbo].[Oracle_DJ_Processing_Times]
++(
++[unique_id] [decimal] (38, 0) NOT NULL,
++[organization_code] [varchar] (3) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
++[wip_entity_name] [varchar] (240) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
++[op_sequence] [int] NULL,
++[setup_start_time] [datetime] NULL,
++[setup_end_time] [datetime] NULL,
++[run_start_time] [datetime] NULL,
++[run_end_time] [datetime] NULL,
++[success_flag] [varchar] (1) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
++[reject_flag] [varchar] (1) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
++[reason_code] [varchar] (50) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
++[creation_date] [datetime] NULL,
++[last_update_date] [datetime] NULL
++) ON [PRIMARY]
++GO
++ALTER TABLE [dbo].[Oracle_DJ_Processing_Times] ADD CONSTRAINT [PK_Oracle_DJ_Processing_Times] PRIMARY KEY CLUSTERED  ([unique_id]) ON [PRIMARY]
++GO
+diff --git a/Tables/dbo.Oracle_POs.sql b/Tables/dbo.Oracle_POs.sql
+new file mode 100644
+index 0000000..09f3b71
+--- /dev/null
++++ b/Tables/dbo.Oracle_POs.sql
+@@ -0,0 +1,41 @@
++CREATE TABLE [dbo].[Oracle_POs]
++(
++[ORG_PO_LINE_ID] [float] NOT NULL,
++[organization_id] [bigint] NULL,
++[planner_code] [varchar] (10) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
++[buyer_name] [varchar] (240) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
++[vendor_name] [varchar] (240) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
++[po_number] [varchar] (100) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
++[line_num] [float] NULL,
++[shipment_num] [float] NULL,
++[category_name] [varchar] (40) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
++[oracle_item_id] [bigint] NULL,
++[item_number] [varchar] (40) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
++[mfg_part_number] [varchar] (150) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
++[promised_date] [datetime] NULL,
++[need_by_date] [datetime] NULL,
++[open_po_quantity] [float] NULL,
++[unit_price] [float] NULL,
++[extended_value] [float] NULL,
++[line_comment] [varchar] (150) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
++[requisitioner_name] [varchar] (240) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
++[UOM] [varchar] (25) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
++[po_quantity] [float] NULL,
++[organization_code] [varchar] (3) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
++[received_quantity] [float] NULL,
++[authorization_status] [varchar] (25) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
++[primary_uom_code] [varchar] (3) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
++[open_po_qty_primary] [float] NULL,
++[unit_item_cost] [float] NULL,
++[po_approval_date] [datetime] NULL,
++[receipt_date] [datetime] NULL,
++[po_creation_date] [datetime] NULL,
++[last_60days] [varchar] (50) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
++[creation_date] [datetime] NULL,
++[last_update_date] [datetime] NULL
++) ON [PRIMARY]
++GO
++ALTER TABLE [dbo].[Oracle_POs] ADD CONSTRAINT [PK_Oracle_POs] PRIMARY KEY CLUSTERED  ([ORG_PO_LINE_ID]) ON [PRIMARY]
++GO
++DENY DELETE ON  [dbo].[Oracle_POs] TO [NAA\SPB_Scheduling_RW]
++GO
+diff --git a/Tables/dbo._report_3b_specialty_order_detail.sql b/Tables/dbo._report_3b_specialty_order_detail.sql
+new file mode 100644
+index 0000000..d1bfe18
+--- /dev/null
++++ b/Tables/dbo._report_3b_specialty_order_detail.sql
+@@ -0,0 +1,22 @@
++CREATE TABLE [dbo].[_report_3b_specialty_order_detail]
++(
++[return_osp] [varchar] (1) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
++[ncmir_notes] [varchar] (1) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
++[print_notes] [varchar] (1) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
++[conc_order_number] [varchar] (max) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
++[customer_name] [varchar] (360) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
++[job] [varchar] (max) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
++[part_number] [varchar] (max) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
++[so_qty] [float] NULL,
++[request_date] [datetime] NULL,
++[promise_date] [datetime] NULL,
++[schedule_ship_date] [datetime] NULL,
++[schedule_approved] [varchar] (30) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
++[scheduled_setup_start] [datetime] NULL,
++[machine_name] [varchar] (max) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
++[component_item] [varchar] (max) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
++[ProductionStatus] [varchar] (max) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
++[material_earliest_start_date] [datetime] NULL,
++[last_update_date] [datetime] NOT NULL
++) ON [PRIMARY]
++GO
+diff --git a/Tables/dbo._report_3c_acs_order_status_review.sql b/Tables/dbo._report_3c_acs_order_status_review.sql
+new file mode 100644
+index 0000000..9be2de7
+--- /dev/null
++++ b/Tables/dbo._report_3c_acs_order_status_review.sql
+@@ -0,0 +1,19 @@
++CREATE TABLE [dbo].[_report_3c_acs_order_status_review]
++(
++[conc_order_number] [varchar] (max) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
++[customer_name] [varchar] (360) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
++[job] [varchar] (max) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
++[part_number] [varchar] (max) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
++[so_qty] [float] NULL,
++[request_date] [datetime] NULL,
++[promise_date] [datetime] NULL,
++[schedule_ship_date] [datetime] NULL,
++[schedule_approved] [varchar] (30) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
++[scheduled_setup_start] [datetime] NULL,
++[machine_name] [varchar] (max) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
++[component_item] [varchar] (max) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
++[ProductionStatus] [varchar] (max) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
++[material_earliest_start_date] [datetime] NULL,
++[last_update_date] [datetime] NOT NULL
++) ON [PRIMARY]
++GO
+diff --git a/Tables/dbo._report_9a_bobbin_usage_release.sql b/Tables/dbo._report_9a_bobbin_usage_release.sql
+new file mode 100644
+index 0000000..7aadf6d
+--- /dev/null
++++ b/Tables/dbo._report_9a_bobbin_usage_release.sql
+@@ -0,0 +1,12 @@
++CREATE TABLE [dbo].[_report_9a_bobbin_usage_release]
++(
++[Job] [varchar] (max) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
++[Op] [varchar] (max) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
++[OrderNumber] [varchar] (max) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
++[ProductName] [varchar] (max) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
++[UsageDate] [datetime] NULL,
++[BobbinCount] [int] NULL,
++[BobbinStageUsageDurationDays] [float] NULL,
++[last_update_date] [datetime] NOT NULL
++) ON [PRIMARY]
++GO
+diff --git a/Tables/dbo._report_9a_bobbin_usage_running_total.sql b/Tables/dbo._report_9a_bobbin_usage_running_total.sql
+new file mode 100644
+index 0000000..b49a86a
+--- /dev/null
++++ b/Tables/dbo._report_9a_bobbin_usage_running_total.sql
+@@ -0,0 +1,9 @@
++CREATE TABLE [dbo].[_report_9a_bobbin_usage_running_total]
++(
++[UsageDate] [datetime] NULL,
++[BobbinCount] [int] NULL,
++[RunningBobbinCount] [int] NULL,
++[AverageStageReelUsageDays] [float] NULL,
++[last_update_date] [datetime] NOT NULL
++) ON [PRIMARY]
++GO
+diff --git a/Views/Scheduling.vAlertMfgHold.sql b/Views/Scheduling.vAlertMfgHold.sql
+new file mode 100644
+index 0000000..6fea3be
+--- /dev/null
++++ b/Views/Scheduling.vAlertMfgHold.sql
+@@ -0,0 +1,18 @@
++SET QUOTED_IDENTIFIER ON
++GO
++SET ANSI_NULLS ON
++GO
++/*
++Author:		Bryan Eddy
++Date:		4/5/2018
++Desc:		Mfg Hold Alert
++Version:	1
++Update:		n/a
++*/
++
++CREATE VIEW [Scheduling].[vAlertMfgHold]
++as
++SELECT DISTINCT order_number, conc_order_number, promise_date, need_by_date, has_mfg_hold, assembly_item, customer_name, scheduler, pri_uom_order_qty
++FROM dbo.Oracle_Orders
++WHERE has_mfg_hold = 'Y' AND DATEDIFF(DD,promise_date,GETDATE()) <= 21
++GO
+diff --git a/Views/Scheduling.vDjStatusConflict.sql b/Views/Scheduling.vDjStatusConflict.sql
+new file mode 100644
+index 0000000..97d930f
+--- /dev/null
++++ b/Views/Scheduling.vDjStatusConflict.sql
+@@ -0,0 +1,81 @@
++SET QUOTED_IDENTIFIER ON
++GO
++SET ANSI_NULLS ON
++GO
++
++/*
++Author:		Bryan Eddy
++Date:		4/3/2018
++Desc:		Display jobs with status conflicts.  Created to report issues with jobs having process status conflicts.  Example: Two simultaneous operations running for a single job
++Version:	1
++Update:		N/A
++*/
++CREATE VIEW [Scheduling].[vDjStatusConflict]
++AS
++
++
++WITH
++
++next_op
++AS
++(
++SELECT        r.wip_entity_name, r.operation_seq_num as c_op, MIN(r2.operation_seq_num) AS n_op
++                          FROM            dbo.Oracle_DJ_Routes AS r LEFT OUTER JOIN
++                                                    dbo.Oracle_DJ_Routes AS r2 ON r.wip_entity_name = r2.wip_entity_name AND r.operation_seq_num < r2.operation_seq_num
++                          GROUP BY r.wip_entity_name, r.operation_seq_num
++),
++
++op_status
++AS
++(
++SELECT        n.wip_entity_name, n.c_op, cr.true_operation_seq_num as c_true_op, cr.dj_status as c_status, cp.setup_start_time as c_setup_start_time, cp.run_start_time as c_run_start, cr.op_quantity_completed as c_qty_complete, cr.start_quantity as c_qty_start, n.n_op, nr.true_operation_seq_num as n_true_op, nr.op_quantity_completed as n_qty_completed,
++				CASE WHEN (cr.op_quantity_completed >= cr.start_quantity) OR (nr.op_quantity_completed > 0) OR (cr.dj_status IN ('Complete','Closed')) THEN 'finished' 
++				WHEN (cr.op_quantity_completed > 0) OR (cp.run_start_time IS NOT NULL) THEN 'running' 
++				WHEN (cp.setup_start_time IS NOT NULL) THEN 'settingup' ELSE 'ready_wait' END AS p_status
++FROM            next_op AS n INNER JOIN	
++				Oracle_DJ_Routes as cr ON n.wip_entity_name = cr.wip_entity_name and n.c_op = cr.operation_seq_num LEFT OUTER JOIN
++				Oracle_DJ_Processing_Times as cp ON n.wip_entity_name = cp.wip_entity_name and n.c_op = cp.op_sequence LEFT OUTER JOIN
++				Oracle_DJ_Routes as nr ON n.wip_entity_name = nr.wip_entity_name and n.n_op = nr.operation_seq_num
++),
++
++running_counts
++AS
++(
++ SELECT wip_entity_name, count(p_status) as [count] from op_status
++ WHERE p_status = 'running'
++ GROUP BY wip_entity_name
++)
++
++	SELECT o.wip_entity_name, o.c_op AS operation_seq_num, o.n_true_op AS true_operation_seq_num
++	FROM op_status o INNER JOIN
++	running_counts r ON o.wip_entity_name = r.wip_entity_name
++	where [count] > 1
++
++--SELECT        a.wip_entity_name, a.operation_seq_num, r4.true_operation_seq_num
++--FROM            (SELECT        r.wip_entity_name, r.operation_seq_num, MIN(r2.operation_seq_num) AS next_op_seq_num
++--                          FROM            dbo.Oracle_DJ_Routes AS r LEFT OUTER JOIN
++--                                                    dbo.Oracle_DJ_Routes AS r2 ON r.wip_entity_name = r2.wip_entity_name AND r.operation_seq_num < r2.operation_seq_num
++--                          GROUP BY r.wip_entity_name, r.operation_seq_num) AS a INNER JOIN
++--                         dbo.Oracle_DJ_Routes AS r3 ON a.wip_entity_name = r3.wip_entity_name AND a.operation_seq_num = r3.operation_seq_num INNER JOIN
++--                         dbo.Oracle_DJ_Processing_Times AS p3 ON r3.wip_entity_name = p3.wip_entity_name AND r3.operation_seq_num = p3.op_sequence INNER JOIN
++--                         dbo.Oracle_DJ_Routes AS r4 ON a.wip_entity_name = r4.wip_entity_name AND a.operation_seq_num = r4.operation_seq_num
++--WHERE        (r3.dj_status NOT IN ('Complete', 'Closed')) AND (r3.op_quantity_completed < r3.start_quantity) AND (r3.op_quantity_completed > 0) AND (r4.op_quantity_completed = 0)
++--GO
++
++--WITH cteConflict
++--AS(
++--	SELECT K.assembly_item,I.wip_entity_name, K.job_type, K.dj_status, I.run_start_time, I.run_end_time, I.success_flag, I.reject_flag, K.true_operation_code, K.operation_code
++--	,K.operation_seq_num, COALESCE(K.quantity_completed,0) AS quantity_completed, K.start_quantity, K.net_quantity
++--	,LEAD(I.run_start_time,1) OVER (PARTITION BY I.wip_entity_name ORDER BY K.operation_seq_num) NextProcessRunStartTime
++--	,LEAD(K.quantity_completed,1,0) OVER (PARTITION BY I.wip_entity_name ORDER BY K.operation_seq_num) NextProcessQuantityCompleted
++--	,LEAD(true_operation_code,1,true_operation_code) OVER (PARTITION BY I.wip_entity_name ORDER BY K.operation_seq_num) NextTrueOperationCode
++--	FROM Oracle_DJ_Routes K INNER JOIN dbo.Oracle_DJ_Processing_Times I ON I.wip_entity_name = K.wip_entity_name AND I.op_sequence = K.operation_seq_num
++--	WHERE K.dj_status NOT IN ('COMPLETE', 'CLOSED')
++--)
++--SELECT * 
++--FROM cteConflict i
++--WHERE ((i.run_end_time IS NULL AND NextProcessRunStartTime IS NOT NULL AND NextProcessQuantityCompleted <=0) 
++--OR (i.run_start_time IS NULL AND i.quantity_completed >0 AND i.NextProcessQuantityCompleted = 0)) --AND i.true_operation_code <> i.NextTrueOperationCode
++
++--ORDER BY I.wip_entity_name, I.operation_seq_num
++GO
+diff --git a/Views/Scheduling.vOpenPOs.sql b/Views/Scheduling.vOpenPOs.sql
+new file mode 100644
+index 0000000..8482d2a
+--- /dev/null
++++ b/Views/Scheduling.vOpenPOs.sql
+@@ -0,0 +1,20 @@
++SET QUOTED_IDENTIFIER ON
++GO
++SET ANSI_NULLS ON
++GO
++
++/****** Script for SelectTopNRows command from SSMS  ******/
++/*
++Author:		Bryan Eddy
++Date:		4/27/2018
++Desc:		View to show open PO's from buyers to vendors for materials
++Version:	2
++Update:		Removed negative open po qty parameter
++*/
++CREATE VIEW [Scheduling].[vOpenPOs]
++AS
++SELECT item_number, open_po_qty_primary, vendor_name, po_number,promised_date, need_by_date, primary_uom_code,category_name
++  FROM [PlanetTogether_Data_Prod].[dbo].[Oracle_POs]
++  WHERE open_po_qty_primary > 0
++
++GO
+diff --git a/Views/Scheduling.vOrdersWithMaterialsNotOrderedInNineMonths.sql b/Views/Scheduling.vOrdersWithMaterialsNotOrderedInNineMonths.sql
+new file mode 100644
+index 0000000..5670fd8
+--- /dev/null
++++ b/Views/Scheduling.vOrdersWithMaterialsNotOrderedInNineMonths.sql
+@@ -0,0 +1,55 @@
++SET QUOTED_IDENTIFIER ON
++GO
++SET ANSI_NULLS ON
++GO
++
++
++
++
++
++
++/*
++Author:		Bryan Eddy
++Date:		4/4/2018
++Desc:		View to show orders having materials that haven't been ordered in 9 months.
++Version:	1
++Update:		n/a
++*/
++
++
++CREATE VIEW [Scheduling].[vOrdersWithMaterialsNotOrderedInNineMonths]
++AS
++/************ Old query.  Keeping until data is confirmed*********************/
++
++WITH cteBomExplode
++AS (
++	SELECT  E.conc_order_number, E.assembly_item,E.order_quantity, i.FinishedGood, i.comp_item,I.ExtendedQuantityPer
++	,MAX(E.order_quantity) OVER (PARTITION BY I.comp_item) AS MaxOrderQuantityPerMaterial, I.primary_uom_code
++	FROM (SELECT DISTINCT conc_order_number, assembly_item, order_quantity FROM dbo.Oracle_Orders WHERE schedule_approved = 'n') E CROSS APPLY dbo.fn_ExplodeBOM(E.assembly_item) I
++	--GROUP BY E.conc_order_number, E.assembly_item,E.order_quantity, i.FinishedGood, i.comp_item,
++
++	)
++,cteBomAgg
++AS(
++	SELECT   G.conc_order_number, G.assembly_item, G.FinishedGood,G.MaxOrderQuantityPerMaterial,G.comp_item
++	, SUM(G.ExtendedQuantityPer* G.order_quantity) OVER (PARTITION BY G.comp_item) AS MaterialDemandTotal
++	, G.primary_uom_code, G.order_quantity
++	FROM cteBomExplode G
++
++),
++cteOnHnad
++AS(
++SELECT DISTINCT item_number, SUM(onhand_qty) OVER (PARTITION BY item_number) AS TotalQuantityOnHand
++FROM dbo.Oracle_Onhand
++WHERE subinventory_code <> 'FLOORSTK'
++)
++SELECT DISTINCT  k.conc_order_number, K.FinishedGood,K.order_quantity,K.comp_item AS Material, j.primary_uom_code, inventory_item_status_code, po_date
++, po_receipt_date, J.make_buy, K.MaxOrderQuantityPerMaterial, K.MaterialDemandTotal
++,J.item_description MaterialDescription, O.TotalQuantityOnHand, O.TotalQuantityOnHand - K.MaterialDemandTotal MaterialDemandDelta, 1 - (O.TotalQuantityOnHand - K.MaterialDemandTotal)/O.TotalQuantityOnHand DemandPercentOfOnHand
++FROM dbo.Oracle_Items J INNER JOIN cteBomAgg K ON J.item_number = K.comp_item 
++INNER JOIN cteOnHnad O ON O.item_number = J.item_number
++WHERE (DATEDIFF(MM,po_date,GETDATE()) >= 9 OR DATEDIFF(MM,po_receipt_date,GETDATE()) >=9)
++	AND J.make_buy = 'buy' --D K.MaterialDemand > O.TotalQuantityOnHand
++--ORDER BY Material, K.order_quantity
++
++GO
+diff --git a/Views/Setup.vExcludedOrdersDetail.sql b/Views/Setup.vExcludedOrdersDetail.sql
+new file mode 100644
+index 0000000..fc32ec5
+--- /dev/null
++++ b/Views/Setup.vExcludedOrdersDetail.sql
+@@ -0,0 +1,37 @@
++SET QUOTED_IDENTIFIER ON
++GO
++SET ANSI_NULLS ON
++GO
++
++
++
++
++
++
++
++
++
++/*
++Author:			Bryan Eddy
++Date:			3/16/18
++Description:	Exclusion list to show just Dj's and sales orders that are affected from missing setups
++Version:		1
++Update:			Initial creation
++
++
++
++*/
++
++CREATE VIEW	[Setup].[vExcludedOrdersDetail]
++AS
++	
++
++	SELECT DISTINCT K.ConcOrderNumber, k.AssembtlyItem, K.ParentDj, G.Setup, G.operation_seq_num
++	FROM Setup.vMissingSetupsDj G CROSS APPLY setup.fn_WhereUsedDj(g.wip_entity_name) K
++	UNION 
++	SELECT   i.conc_order_number, Item AS ItemNumber, i.wip_entity_name, i.Setup, i.operation_seq_num
++	FROM Setup.vMissingSetupsDj i
++
++
++
++GO
