@@ -1,4 +1,3 @@
-INSERT INTO [dbo].[APS_ProductLeadTimes_HardCoded] ([ID], [ProductAttribute1Id], [Name], [MfgLeadTime]) VALUES ('19e8f4e2-8c35-4d01-919d-559a9749db81', 102, N'Cable.OPGW.Stainless Steel.TriCore.Double Layer', 17)
 INSERT INTO [dbo].[APS_ProductLeadTimes_HardCoded] ([ID], [ProductAttribute1Id], [Name], [MfgLeadTime]) VALUES ('f1beb233-bd13-449a-a13b-00c61a21bc11', 1, N'Cable.LooseTube.MM.Stranded.IndoorOutdoor', 17)
 INSERT INTO [dbo].[APS_ProductLeadTimes_HardCoded] ([ID], [ProductAttribute1Id], [Name], [MfgLeadTime]) VALUES ('23112277-5944-482f-8e68-0556affa906a', 49, N'Cable.ADSS.MM.Flex-Span.', 17)
 INSERT INTO [dbo].[APS_ProductLeadTimes_HardCoded] ([ID], [ProductAttribute1Id], [Name], [MfgLeadTime]) VALUES ('01baff15-7bc0-4057-812b-07b6e7306d2c', 68, N'Cable.ADSS.MM.Mini-Span.383', 17)
@@ -75,7 +74,6 @@ INSERT INTO [dbo].[APS_ProductLeadTimes_HardCoded] ([ID], [ProductAttribute1Id],
 INSERT INTO [dbo].[APS_ProductLeadTimes_HardCoded] ([ID], [ProductAttribute1Id], [Name], [MfgLeadTime]) VALUES ('7ab359eb-56fc-45d9-9071-b220d1d08eba', 69, N'Cable.Specialty.SUB-UNIT..', 21)
 INSERT INTO [dbo].[APS_ProductLeadTimes_HardCoded] ([ID], [ProductAttribute1Id], [Name], [MfgLeadTime]) VALUES ('5b9467e9-613f-4991-98b4-b5a83893fea2', 12, N'Cable.MicroCore.SM.Access.', 17)
 INSERT INTO [dbo].[APS_ProductLeadTimes_HardCoded] ([ID], [ProductAttribute1Id], [Name], [MfgLeadTime]) VALUES ('1a65ff7e-abd4-49c9-bbf4-b5c25283d584', 67, N'Cable.Specialty.SSTube >2_3mm.Jacket.Acrylate', 21)
-INSERT INTO [dbo].[APS_ProductLeadTimes_HardCoded] ([ID], [ProductAttribute1Id], [Name], [MfgLeadTime]) VALUES ('1ec28659-dc14-496b-8737-b5f130ca3eb5', 93, N'Cable.Specialty.SSTube >2_3mm.Armored Jacket.Acrylate', 12)
 INSERT INTO [dbo].[APS_ProductLeadTimes_HardCoded] ([ID], [ProductAttribute1Id], [Name], [MfgLeadTime]) VALUES ('39b6c233-7d7c-463e-b424-b654a15a7e08', 41, N'Cable.ADSS.SM.TRC.', 17)
 INSERT INTO [dbo].[APS_ProductLeadTimes_HardCoded] ([ID], [ProductAttribute1Id], [Name], [MfgLeadTime]) VALUES ('2dda2060-3a63-4bdc-8a79-b707dbcd1c36', 38, N'Cable.OPGW.Stainless Steel.CentraCore.Single Layer', 21)
 INSERT INTO [dbo].[APS_ProductLeadTimes_HardCoded] ([ID], [ProductAttribute1Id], [Name], [MfgLeadTime]) VALUES ('0703ba27-360b-46b6-aeee-b81bfe90fe31', 103, N'Cable.Specialty.OilWell.Traditional Square.Silicone', 21)
@@ -104,3 +102,5 @@ INSERT INTO [dbo].[APS_ProductLeadTimes_HardCoded] ([ID], [ProductAttribute1Id],
 INSERT INTO [dbo].[APS_ProductLeadTimes_HardCoded] ([ID], [ProductAttribute1Id], [Name], [MfgLeadTime]) VALUES ('ef564773-df5f-42fe-8a76-f2727fb727be', 43, N'Cable.BLKJKT.SUB-UNIT..', 17)
 INSERT INTO [dbo].[APS_ProductLeadTimes_HardCoded] ([ID], [ProductAttribute1Id], [Name], [MfgLeadTime]) VALUES ('f135c275-9250-48cd-a21c-f50e2f01b78d', 9, N'Cable.OPGW.AlumaCore.Loose Tube.Double Layer', 21)
 INSERT INTO [dbo].[APS_ProductLeadTimes_HardCoded] ([ID], [ProductAttribute1Id], [Name], [MfgLeadTime]) VALUES ('dad3671b-8234-4db2-83a1-fe97f2e8757b', 82, N'Cable.Specialty.SSTube >2_3mm.Armored Bare.Polyimide', 21)
+INSERT INTO [dbo].[APS_ProductLeadTimes_HardCoded] ([ID], [ProductAttribute1Id], [Name], [MfgLeadTime]) VALUES ('19e8f4e2-8c35-4d01-919d-559a9749db81', 102, N'Cable.OPGW.Stainless Steel.TriCore.Double Layer', 21)
+INSERT INTO [dbo].[APS_ProductLeadTimes_HardCoded] ([ID], [ProductAttribute1Id], [Name], [MfgLeadTime]) VALUES ('1ec28659-dc14-496b-8737-b5f130ca3eb5', 93, N'Cable.Specialty.SSTube >2_3mm.Armored Jacket.Acrylate', 21)

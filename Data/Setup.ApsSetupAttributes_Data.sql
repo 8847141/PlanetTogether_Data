@@ -1,7 +1,4 @@
 SET IDENTITY_INSERT [Setup].[ApsSetupAttributes] ON
-INSERT INTO [Setup].[ApsSetupAttributes] ([AttributeNameID], [AttributeName], [CreatedBy], [DateCreated], [DataTypeID], [UnitOfMeasureID], [AttributeDescription]) VALUES (40, N'ID', N'NAA\eddybc', '2018-05-09 14:48:38.770', 2, 1, N'Cable ID')
-SET IDENTITY_INSERT [Setup].[ApsSetupAttributes] OFF
-SET IDENTITY_INSERT [Setup].[ApsSetupAttributes] ON
 INSERT INTO [Setup].[ApsSetupAttributes] ([AttributeNameID], [AttributeName], [CreatedBy], [DateCreated], [DataTypeID], [UnitOfMeasureID], [AttributeDescription]) VALUES (1, N'Armor', N'NAA\eddybc', '2017-08-01 13:12:09.630', 1, NULL, NULL)
 INSERT INTO [Setup].[ApsSetupAttributes] ([AttributeNameID], [AttributeName], [CreatedBy], [DateCreated], [DataTypeID], [UnitOfMeasureID], [AttributeDescription]) VALUES (2, N'BaseSetupTime', N'NAA\eddybc', '2017-08-01 13:37:37.190', 2, NULL, NULL)
 INSERT INTO [Setup].[ApsSetupAttributes] ([AttributeNameID], [AttributeName], [CreatedBy], [DateCreated], [DataTypeID], [UnitOfMeasureID], [AttributeDescription]) VALUES (3, N'OD', N'NAA\eddybc', '2017-08-01 13:12:09.630', 2, 1, N'Nominal OD')
@@ -27,7 +24,8 @@ INSERT INTO [Setup].[ApsSetupAttributes] ([AttributeNameID], [AttributeName], [C
 INSERT INTO [Setup].[ApsSetupAttributes] ([AttributeNameID], [AttributeName], [CreatedBy], [DateCreated], [DataTypeID], [UnitOfMeasureID], [AttributeDescription]) VALUES (36, N'DesignType', N'NAA\eddybc', '2017-08-10 15:55:03.807', 1, NULL, NULL)
 INSERT INTO [Setup].[ApsSetupAttributes] ([AttributeNameID], [AttributeName], [CreatedBy], [DateCreated], [DataTypeID], [UnitOfMeasureID], [AttributeDescription]) VALUES (37, N'Print', N'NAA\eddybc', '2017-11-06 11:12:03.307', 3, NULL, NULL)
 INSERT INTO [Setup].[ApsSetupAttributes] ([AttributeNameID], [AttributeName], [CreatedBy], [DateCreated], [DataTypeID], [UnitOfMeasureID], [AttributeDescription]) VALUES (38, N'ColorSequence', N'NAA\eddybc', '2017-12-07 15:49:44.257', 2, NULL, NULL)
+INSERT INTO [Setup].[ApsSetupAttributes] ([AttributeNameID], [AttributeName], [CreatedBy], [DateCreated], [DataTypeID], [UnitOfMeasureID], [AttributeDescription]) VALUES (40, N'ID', N'NAA\eddybc', '2018-05-09 14:48:38.770', 2, 1, N'Cable ID')
 SET IDENTITY_INSERT [Setup].[ApsSetupAttributes] OFF
 SET IDENTITY_INSERT [Setup].[ApsSetupAttributes] ON
-INSERT INTO [Setup].[ApsSetupAttributes] ([AttributeNameID], [AttributeName], [CreatedBy], [DateCreated], [DataTypeID], [UnitOfMeasureID], [AttributeDescription]) VALUES (39, N'ToolingTip', N'NAA\eddybc', '2018-02-14 15:20:41.120', 2, 1, N'Tooling Tip ID x OD')
+INSERT INTO [Setup].[ApsSetupAttributes] ([AttributeNameID], [AttributeName], [CreatedBy], [DateCreated], [DataTypeID], [UnitOfMeasureID], [AttributeDescription]) VALUES (39, N'ToolingTip', N'NAA\eddybc', '2018-02-14 15:20:41.120', 1, 1, N'Tooling Tip ID x OD')
 SET IDENTITY_INSERT [Setup].[ApsSetupAttributes] OFF
