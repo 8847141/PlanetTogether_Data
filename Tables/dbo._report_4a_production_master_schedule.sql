@@ -29,6 +29,8 @@ CREATE TABLE [dbo].[_report_4a_production_master_schedule]
 [scheduled_total_hours] [float] NULL,
 [late_order] [varchar] (1) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
 [remake] [varchar] (1) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
+[fiberset] [varchar] (max) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+[stage] [varchar] (max) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
 [last_update_date] [datetime] NOT NULL
 ) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
 GO

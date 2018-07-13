@@ -5,6 +5,7 @@ GO
 
 
 
+
 -- =============================================
 -- Author:		Bryan Eddy
 -- ALTER date:  3/21/2018
@@ -26,7 +27,7 @@ DECLARE  @ReceipientList NVARCHAR(1000),
 
 SET @ReceipientList = 'SPBCableACSSchedulePublishNotification@aflglobal.com'
 
-SET @BlindRecipientlist = ';Bryan.Eddy@aflglobal.com';
+--SET @BlindRecipientlist = ';Bryan.Eddy@aflglobal.com';
 
 
 DECLARE @body1 VARCHAR(MAX)
@@ -45,7 +46,7 @@ BEGIN
 
 			EXEC msdb.dbo.sp_send_dbmail 
 			@recipients=@ReceipientList,
-			@blind_copy_recipients =  @BlindRecipientlist, --@ReceipientList
+			--@blind_copy_recipients =  @BlindRecipientlist, --@ReceipientList
 			@subject = @subject,
 			@body = @tableHTML,
 			@body_format = 'HTML';

@@ -1,0 +1,333 @@
+diff --git a/Stored Procedures/Scheduling.usp_EmailSchedulePublishNotification.sql b/Stored Procedures/Scheduling.usp_EmailSchedulePublishNotification.sql
+new file mode 100644
+index 0000000..636a38d
+--- /dev/null
++++ b/Stored Procedures/Scheduling.usp_EmailSchedulePublishNotification.sql
+@@ -0,0 +1,55 @@
++SET QUOTED_IDENTIFIER ON
++GO
++SET ANSI_NULLS ON
++GO
++
++
++
++-- =============================================
++-- Author:		Bryan Eddy
++-- ALTER date:  3/21/2018
++-- Description:	Send email of publish notification
++-- Version:		1
++-- Update:		initial creation
++-- =============================================
++CREATE PROCEDURE [Scheduling].[usp_EmailSchedulePublishNotification]
++
++AS
++
++
++SET NOCOUNT ON;
++
++
++DECLARE  @ReceipientList NVARCHAR(1000),
++		@BlindRecipientlist NVARCHAR(1000)
++
++
++SET @ReceipientList = 'SPBCableACSSchedulePublishNotification@aflglobal.com'
++
++SET @BlindRecipientlist = ';Bryan.Eddy@aflglobal.com';
++
++
++DECLARE @body1 VARCHAR(MAX)
++DECLARE @subject VARCHAR(MAX)
++--DECLARE @query VARCHAR(MAX) = N'SELECT * FROM tempdb..#Results;'
++SET @subject = 'Schedule Publish Notification' 
++
++
++DECLARE @tableHTML  NVARCHAR(MAX) ;
++BEGIN
++	
++			SET @tableHTML =
++				N'<H1>Schedule Publish</H1>' +
++				N'<H2 span style=''font-size:16.0pt;font-family:"Calibri","sans-serif";color:#EB3814''>The schedule has been updated.</H2>' 
++
++
++			EXEC msdb.dbo.sp_send_dbmail 
++			@recipients=@ReceipientList,
++			@blind_copy_recipients =  @BlindRecipientlist, --@ReceipientList
++			@subject = @subject,
++			@body = @tableHTML,
++			@body_format = 'HTML';
++END
++
++
++GO
+diff --git a/Stored Procedures/dbo.usp_EmailOracleTableRecordCount.sql b/Stored Procedures/dbo.usp_EmailOracleTableRecordCount.sql
+new file mode 100644
+index 0000000..8962d98
+--- /dev/null
++++ b/Stored Procedures/dbo.usp_EmailOracleTableRecordCount.sql
+@@ -0,0 +1,68 @@
++SET QUOTED_IDENTIFIER ON
++GO
++SET ANSI_NULLS ON
++GO
++/*
++Author:			Bryan Eddy
++Date:			4/16/2017
++Description:	Send email of the record count of all Oracle tables in the [Oracle_Interface_Status] table.
++Version:		2
++Update:			Updated recipients to pull from the DL
++*/
++
++CREATE PROCEDURE [dbo].[usp_EmailOracleTableRecordCount]
++
++AS
++SET NOCOUNT ON; 
++DECLARE @t TABLE(query VARCHAR(1000),[tables] VARCHAR(50))
++
++IF OBJECT_ID(N'tempdb..#OracleRecordCount', N'U') IS NOT NULL
++DROP TABLE #OracleRecordCount;
++CREATE TABLE #OracleRecordCount(
++RecordCount INT,
++TableName NVARCHAR(100))
++
++
++INSERT INTO @t 
++    SELECT ' INSERT INTO #OracleRecordCount(RecordCount, TableName) SELECT COUNT(*) ,'''+T.interface_name+'''   FROM  ['+T.interface_name+']', T.interface_name  
++
++    FROM [dbo].[Oracle_Interface_Status] t
++
++
++DECLARE @sql VARCHAR(8000)
++
++
++SELECT @sql=ISNULL(@sql+' ','')+ query FROM @t
++
++
++EXEC(@sql)
++
++DECLARE @Receipientlist varchar(1000)
++
++SET @Receipientlist = (STUFF((SELECT ';' + UserEmail 
++						FROM [NAASPB-PRD04\SQL2014].premise.dbo.tblConfiguratorUser G  INNER JOIN [NAASPB-PRD04\SQL2014].premise.users.UserResponsibility  K ON  G.UserID = K.UserID
++  						WHERE K.ResponsibilityID = 18 FOR XML PATH('')),1,1,''))
++
++			
++
++
++	DECLARE @html nvarchar(MAX),
++@SubjectLine NVARCHAR(1000)
++
++	SET @SubjectLine = 'Oracle Table Record Count ' + CAST(GETDATE() AS NVARCHAR(50))
++	EXEC Scheduling.usp_QueryToHtmlTable @html = @html OUTPUT,  
++	@query = N'SELECT * FROM #OracleRecordCount', @orderBy = N'TableName';
++
++
++					EXEC msdb.dbo.sp_send_dbmail 
++					@recipients=@Receipientlist ,
++					--@recipients='Bryan.Eddy@aflglobal.com;',
++					@blind_copy_recipients = 'bryan.eddy@aflglobal.com',
++					@subject = @SubjectLine,
++					@body = @html,
++					@body_format = 'HTML',
++					@query_no_truncate = 1,
++					@attach_query_result_as_file = 0;
++
++
++GO
+diff --git a/Tables/dbo.Oracle_Interface_Status.sql b/Tables/dbo.Oracle_Interface_Status.sql
+new file mode 100644
+index 0000000..e5e44f0
+--- /dev/null
++++ b/Tables/dbo.Oracle_Interface_Status.sql
+@@ -0,0 +1,45 @@
++CREATE TABLE [dbo].[Oracle_Interface_Status]
++(
++[interface_name] [varchar] (100) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
++[interface_status] [varchar] (50) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
++[interface_last_processed_date] [datetime] NULL,
++[last_update_date] [datetime] NULL
++) ON [PRIMARY]
++GO
++SET QUOTED_IDENTIFIER ON
++GO
++SET ANSI_NULLS ON
++GO
++-- =============================================
++-- Author:		Bryan Eddy
++-- Create date: 4/16/2018
++-- Description:	Detect if Oracle_DJ_BOM interface has been update
++-- =============================================
++CREATE TRIGGER [dbo].[trgr_RecordCountAlert]
++   ON [dbo].[Oracle_Interface_Status]
++   AFTER Update
++AS 
++BEGIN
++	-- SET NOCOUNT ON added to prevent extra result sets from
++	-- interfering with SELECT statements.
++	SET NOCOUNT ON;
++	DECLARE @NumRows AS int
++
++    IF  UPDATE(interface_status)
++		BEGIN
++			SELECT @NumRows =  COUNT(*) FROM Inserted I INNER JOIN dbo.Oracle_Interface_Status J ON I.interface_name = J.interface_name
++			 WHERE J.interface_name = 'Oracle_DJ_BOM' AND I.interface_status = 'Complete'
++
++			IF @NumRows > 0
++			BEGIN
++				EXEC dbo.usp_EmailOracleTableRecordCount
++			END
++
++		END 
++
++END
++GO
++ALTER TABLE [dbo].[Oracle_Interface_Status] ADD CONSTRAINT [PK_Oracle_Interface_Status_1] PRIMARY KEY CLUSTERED  ([interface_name]) ON [PRIMARY]
++GO
++DENY DELETE ON  [dbo].[Oracle_Interface_Status] TO [NAA\SPB_Scheduling_RW]
++GO
+diff --git a/Tables/dbo._mst_push.sql b/Tables/dbo._mst_push.sql
+new file mode 100644
+index 0000000..29c108b
+--- /dev/null
++++ b/Tables/dbo._mst_push.sql
+@@ -0,0 +1,36 @@
++CREATE TABLE [dbo].[_mst_push]
++(
++[last_update_date] [datetime] NOT NULL,
++[master_schedule_id] [float] NOT NULL,
++[organization_code] [varchar] (3) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
++[order_number] [bigint] NULL,
++[line_number] [bigint] NULL,
++[conc_order_number] [varchar] (50) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
++[component_item] [varchar] (50) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
++[assembly_item] [varchar] (50) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
++[operation_seq_num] [float] NULL,
++[operation_code] [varchar] (50) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
++[true_operation_seq_num] [float] NULL,
++[true_operation_code] [nvarchar] (30) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
++[child_dj_number] [varchar] (50) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
++[parent_dj_number] [varchar] (50) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
++[machine_name] [varchar] (max) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
++[original_machine_name] [varchar] (50) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
++[regrouping_allowed] [varchar] (10) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
++[setup_start_date] [datetime] NULL,
++[start_time_date] [datetime] NULL,
++[end_time_date] [datetime] NULL,
++[to_machine] [varchar] (max) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
++[reel_size] [nvarchar] (50) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
++[ship_date] [datetime] NULL,
++[start_qty] [float] NULL,
++[total_job_length] [float] NULL,
++[group_id] [nvarchar] (100) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
++[staging_number] [nvarchar] (max) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
++[fiber_set_id] [varchar] (max) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
++[complete] [varchar] (7) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
++[scheduled] [varchar] (7) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
++[locked] [varchar] (1) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
++[machine_override] [varchar] (1) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL
++) ON [PRIMARY]
++GO
+diff --git a/Tables/dbo._report_9b_capacity.sql b/Tables/dbo._report_9b_capacity.sql
+new file mode 100644
+index 0000000..00664dd
+--- /dev/null
++++ b/Tables/dbo._report_9b_capacity.sql
+@@ -0,0 +1,11 @@
++CREATE TABLE [dbo].[_report_9b_capacity]
++(
++[day] [date] NOT NULL,
++[machine] [varchar] (max) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
++[hours_available] [float] NOT NULL,
++[hours_utilized] [numeric] (38, 6) NOT NULL,
++[percent_utilized] [float] NULL,
++[qty] [float] NOT NULL,
++[last_update_date] [datetime] NOT NULL
++) ON [PRIMARY]
++GO
+diff --git a/Views/Scheduling.vProductionSchedule.sql b/Views/Scheduling.vProductionSchedule.sql
+new file mode 100644
+index 0000000..2e715aa
+--- /dev/null
++++ b/Views/Scheduling.vProductionSchedule.sql
+@@ -0,0 +1,55 @@
++SET QUOTED_IDENTIFIER ON
++GO
++SET ANSI_NULLS ON
++GO
++/*
++Author:		Bryan Eddy
++Date:		3/14/2018
++Desc:		View for SSRS reporting
++Version:	1
++Update:		n/a
++Note:		OD first uses OD from Setup information else it uses OD from item.  Item OD and setup OD are not the same.  
++			This will not be accurate for all items, just tubes, and sheathing.  Not cabling.
++			Color does not apply to sheathing
++*/
++
++CREATE VIEW [Scheduling].[vProductionSchedule]
++AS
++SELECT R.planned_setup_start,
++       R.planned_setup_end,
++       R.previous_op_machine,
++       R.previous_op_status,
++       R.current_op_machine,
++       R.current_op_status,
++       R.next_op_machine,
++       R.dj_number,
++       R.sf_group_id,
++       R.job,
++       R.op,
++       R.setup,
++       R.customer,
++       R.order_number,
++       R.order_scheduled_end_date,
++       R.oracle_dj_status,
++       R.part_no,
++       R.job_qty,
++       R.ujcm,
++       R.earliest_material_availability_date,
++       R.need_date,
++       R.promise_date,
++       R.schedule_ship_date,
++       R.scheduled_end_date,
++       R.scheduled_run_hours,
++       R.scheduled_setup_hours,
++       R.scheduled_total_hours,
++       R.late_order,
++       R.remake,
++       R.last_update_date, m.Plant, M.Department, M.DepartmentID, COALESCE(I.NominalOD, A.NominalOD) AS NominalOD
++, I.NumberCorePositions, i.UJCM UpJacketCM, I.JacketMaterial, I.EndsOfAramid
++, CASE WHEN R.promise_date < GETDATE() THEN ROUND(CAST(DATEDIFF(MINUTE,R.promise_date, R.planned_setup_start) AS FLOAT)/60/24,3) END AS PromiseLatenessDays 
++, A.FiberCount, CASE WHEN M.DepartmentID = 5 AND A.Printed = 1 THEN A.CableColor + ' ----' ELSE A.CableColor END AS CableColor, A.Printed
++FROM Setup.vMachineNames M RIGHT JOIN dbo._report_4a_production_master_schedule R ON r.current_op_machine = m.MachineName
++LEFT JOIN Setup.ItemAttributes A ON A.ItemNumber = R.part_no
++LEFT JOIN SETUP.ItemSetupAttributes I ON I.Setup = R.setup AND I.ItemNumber = R.part_no
++WHERE R.planned_setup_start < GETDATE() + 60 
++GO
+diff --git a/Views/Setup.vMachineNames.sql b/Views/Setup.vMachineNames.sql
+new file mode 100644
+index 0000000..7ea43fd
+--- /dev/null
++++ b/Views/Setup.vMachineNames.sql
+@@ -0,0 +1,21 @@
++SET QUOTED_IDENTIFIER ON
++GO
++SET ANSI_NULLS ON
++GO
++/*
++Author:			Bryan Eddy
++Description:	View for PT to get information on machine resources
++Version:		1
++Update:			Added header and ManualSchedule field
++
++
++
++*/
++
++CREATE VIEW [Setup].[vMachineNames]
++AS
++SELECT        MachineID, MachineName, MachineGroupID, P.Plant, D.Department, ShareResource, Grouping, CapacityTypeID, MachineRunEffeciency, MachineSetupEffeciency
++			,ManualSchedule, D.DepartmentID
++FROM            Setup.MachineNames M INNER JOIN Setup.Department D ON D.DepartmentID = M.DepartmentID 
++				INNER JOIN Setup.Plant P ON P.PlantID = D.PlantID
++GO

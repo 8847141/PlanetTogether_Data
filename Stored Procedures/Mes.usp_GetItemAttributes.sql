@@ -10,8 +10,8 @@ GO
 -- Author:      Bryan Eddy
 -- Create date: 4/23/2018
 -- Description: Procedure to get the designated attributes values for information in Mes.MachineAttributes
--- Version:		2
--- Update:		Added insert query to get mapped/desired AttributeNameID's fromt the setup data
+-- Version:		3
+-- Update:		Added print attribute
 -- =============================================
 
 CREATE PROCEDURE [Mes].[usp_GetItemAttributes]
@@ -47,6 +47,12 @@ DECLARE @ErrorLine INT = ERROR_LINE();
 			SELECT  CAST(FiberCount AS NVARCHAR(50)) AS AttrbiuteValue, AttributeName, AttributeNameID, i.DataType, ItemNumber
 			FROM Setup.ItemAttributes CROSS APPLY Setup.ApsSetupAttributes k INNER JOIN Setup.AttributeDataType i ON i.DataTypeID = k.DataTypeID
 			WHERE AttributeNameID = 7
+
+			UNION
+
+			SELECT  CAST(Printed AS NVARCHAR(50)) AS AttrbiuteValue, AttributeName, AttributeNameID, i.DataType, ItemNumber
+			FROM Setup.ItemAttributes CROSS APPLY Setup.ApsSetupAttributes k INNER JOIN Setup.AttributeDataType i ON i.DataTypeID = k.DataTypeID
+			WHERE AttributeNameID = 37
 		)
 		INSERT INTO Mes.ItemSetupAttributes([Setup],MachineID,AttributeNameID,Item_Number, AttributeValue)
 		SELECT DISTINCT P.Setup, M.MachineID, K.AttributeNameID, I.item_number, K.AttrbiuteValue
@@ -98,4 +104,6 @@ END
 
 
 
+GO
+GRANT EXECUTE ON  [Mes].[usp_GetItemAttributes] TO [prLinkUser]
 GO

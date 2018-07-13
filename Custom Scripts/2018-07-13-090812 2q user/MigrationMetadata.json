@@ -1,0 +1,106 @@
+{
+  "Id": "aff08eed-19f3-4438-8854-ad5fdc6a153b",
+  "Name": "Script created at 2018-07-13 08:25.",
+  "ObjectIds": [
+    {
+      "Name": "AttributeMatrixFromTo",
+      "Owner": "Setup",
+      "ObjectType": "Table"
+    },
+    {
+      "Name": "_mst_push",
+      "Owner": "dbo",
+      "ObjectType": "Table"
+    },
+    {
+      "Name": "_report_4a_production_master_schedule",
+      "Owner": "dbo",
+      "ObjectType": "Table"
+    },
+    {
+      "Name": "_report_9b_capacity",
+      "Owner": "dbo",
+      "ObjectType": "Table"
+    },
+    {
+      "Name": "_report_9d_fiberset_lengths",
+      "Owner": "dbo",
+      "ObjectType": "Table"
+    },
+    {
+      "Name": "usp_GetItemAttributes",
+      "Owner": "Mes",
+      "ObjectType": "StoredProcedure"
+    },
+    {
+      "Name": "usp_EmailAlertMissingMaterialDemandDj",
+      "Owner": "Scheduling",
+      "ObjectType": "StoredProcedure"
+    },
+    {
+      "Name": "usp_EmailAlertMissingMaterialDemand",
+      "Owner": "Scheduling",
+      "ObjectType": "StoredProcedure"
+    },
+    {
+      "Name": "usp_EmailMfgHoldAlert",
+      "Owner": "Scheduling",
+      "ObjectType": "StoredProcedure"
+    },
+    {
+      "Name": "usp_EmailOrdersStaleMaterials",
+      "Owner": "Scheduling",
+      "ObjectType": "StoredProcedure"
+    },
+    {
+      "Name": "usp_EmailSchedulePublishNotification",
+      "Owner": "Scheduling",
+      "ObjectType": "StoredProcedure"
+    },
+    {
+      "Name": "usp_EmailSchedulerMachineCapabilityIssue",
+      "Owner": "Scheduling",
+      "ObjectType": "StoredProcedure"
+    },
+    {
+      "Name": "usp_EmailSchedulingMissingLineSpeed",
+      "Owner": "Scheduling",
+      "ObjectType": "StoredProcedure"
+    },
+    {
+      "Name": "usp_CreateBufferingMatrix",
+      "Owner": "Setup",
+      "ObjectType": "StoredProcedure"
+    },
+    {
+      "Name": "usp_CreateSheathingMatrix",
+      "Owner": "Setup",
+      "ObjectType": "StoredProcedure"
+    },
+    {
+      "Name": "usp_EmailMissingDjSetup",
+      "Owner": "Setup",
+      "ObjectType": "StoredProcedure"
+    },
+    {
+      "Name": "usp_EmailOracleTableRecordCount",
+      "Owner": "dbo",
+      "ObjectType": "StoredProcedure"
+    },
+    {
+      "Name": "vProductionSchedule",
+      "Owner": "Scheduling",
+      "ObjectType": "View"
+    },
+    {
+      "Name": "vInterfaceSetupAttributes",
+      "Owner": "Setup",
+      "ObjectType": "View"
+    },
+    {
+      "Name": "Mes",
+      "Owner": null,
+      "ObjectType": "Schema"
+    }
+  ]
+}

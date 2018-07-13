@@ -2,6 +2,8 @@ SET QUOTED_IDENTIFIER ON
 GO
 SET ANSI_NULLS ON
 GO
+
+
 /*
 Author:		Bryan Eddy
 Date:		5/25/2018
@@ -13,7 +15,7 @@ Update:		n/a
 CREATE PROCEDURE [Scheduling].[usp_EmailAlertMissingMaterialDemandDj]
 AS
 BEGIN
-	DECLARE @html nvarchar(MAX),
+	DECLARE @html NVARCHAR(MAX),
 	@SubjectLine NVARCHAR(1000),
 	@ReceipientList NVARCHAR(1000),
 	@RowCount INT,
@@ -48,8 +50,7 @@ BEGIN
 
 			EXEC msdb.dbo.sp_send_dbmail 
 			@recipients=@ReceipientList,
-			--@recipients = 'bryan.eddy@aflglobal.com',
-			@blind_copy_recipients = 'bryan.eddy@aflglobal.com',
+			--@blind_copy_recipients = 'bryan.eddy@aflglobal.com',
 			@subject = @SubjectLine,
 			@body = @html,
 			@body_format = 'HTML',

@@ -6,6 +6,7 @@ CREATE TABLE [dbo].[_mst_push]
 [order_number] [bigint] NULL,
 [line_number] [bigint] NULL,
 [conc_order_number] [varchar] (50) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+[bom_route_alt] [varchar] (50) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
 [component_item] [varchar] (50) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
 [assembly_item] [varchar] (50) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
 [operation_seq_num] [float] NULL,

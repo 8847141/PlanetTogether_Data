@@ -6,6 +6,7 @@ GO
 
 
 
+
 -- =============================================
 -- Author:		Bryan Edy
 -- Create date: 10/31/2017
@@ -83,7 +84,7 @@ BEGIN
 					EXEC msdb.dbo.sp_send_dbmail 
 					@recipients='Jeff.Gilfillan@aflglobal.com; Rich.DiDonato@aflglobal.com',
 					--@recipients='Bryan.Eddy@aflglobal.com',
-					@blind_copy_recipients = 'Bryan.Eddy@aflglobal.com',
+					--@blind_copy_recipients = 'Bryan.Eddy@aflglobal.com',
 					@subject = @subject,
 					@body = @tableHTML,
 					@body_format = 'HTML';

@@ -2,6 +2,7 @@ SET QUOTED_IDENTIFIER ON
 GO
 SET ANSI_NULLS ON
 GO
+
 /*
 Author:			Bryan Eddy
 Date:			4/16/2017
@@ -37,7 +38,7 @@ SELECT @sql=ISNULL(@sql+' ','')+ query FROM @t
 
 EXEC(@sql)
 
-DECLARE @Receipientlist varchar(1000)
+DECLARE @Receipientlist VARCHAR(1000)
 
 SET @Receipientlist = (STUFF((SELECT ';' + UserEmail 
 						FROM [NAASPB-PRD04\SQL2014].premise.dbo.tblConfiguratorUser G  INNER JOIN [NAASPB-PRD04\SQL2014].premise.users.UserResponsibility  K ON  G.UserID = K.UserID
@@ -46,7 +47,7 @@ SET @Receipientlist = (STUFF((SELECT ';' + UserEmail
 			
 
 
-	DECLARE @html nvarchar(MAX),
+	DECLARE @html NVARCHAR(MAX),
 @SubjectLine NVARCHAR(1000)
 
 	SET @SubjectLine = 'Oracle Table Record Count ' + CAST(GETDATE() AS NVARCHAR(50))
@@ -56,8 +57,7 @@ SET @Receipientlist = (STUFF((SELECT ';' + UserEmail
 
 					EXEC msdb.dbo.sp_send_dbmail 
 					@recipients=@Receipientlist ,
-					--@recipients='Bryan.Eddy@aflglobal.com;',
-					@blind_copy_recipients = 'bryan.eddy@aflglobal.com',
+					--@blind_copy_recipients = 'bryan.eddy@aflglobal.com',
 					@subject = @SubjectLine,
 					@body = @html,
 					@body_format = 'HTML',

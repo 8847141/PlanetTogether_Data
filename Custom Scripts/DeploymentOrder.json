@@ -7,6 +7,8 @@
     {"Description":"Migration script 'Script created at 2018-05-25 10:30.'","Type":"Migration","Id":"2018-05-25-103737 1q user"},
     {"Description":"Changes before migration script 'Script created at 2018-06-13 08:11.'","Type":"Compare","Id":"2018-06-13-081321 6a auto"},
     {"Description":"Migration script 'Script created at 2018-06-13 08:11.'","Type":"Migration","Id":"2018-06-13-081321 6b user"},
+    {"Description":"Changes before migration script 'Script created at 2018-07-13 08:25.'","Type":"Compare","Id":"2018-07-13-090812 2p auto"},
+    {"Description":"Migration script 'Script created at 2018-07-13 08:25.'","Type":"Migration","Id":"2018-07-13-090812 2q user"},
   ],
   "Conflict in this file?": "If there’s a conflict in this file, you probably want to keep both changes. Learn more: http://www.red-gate.com/SOC4/order-file-more-info"
 }

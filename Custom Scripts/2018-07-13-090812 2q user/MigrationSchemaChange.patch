@@ -1,0 +1,728 @@
+diff --git a/Security/Schemas/Mes.sql b/Security/Schemas/Mes.sql
+index 4522c76..3a8394b 100644
+--- a/Security/Schemas/Mes.sql
++++ b/Security/Schemas/Mes.sql
+@@ -1,3 +1,5 @@
+ CREATE SCHEMA [Mes]
+ AUTHORIZATION [dbo]
+ GO
++GRANT EXECUTE ON SCHEMA:: [Mes] TO [prLinkUser]
++GO
+diff --git a/Security/Users/prLinkUser.sql b/Security/Users/prLinkUser.sql
+new file mode 100644
+index 0000000..0479e96
+--- /dev/null
++++ b/Security/Users/prLinkUser.sql
+@@ -0,0 +1,5 @@
++IF NOT EXISTS (SELECT * FROM master.dbo.syslogins WHERE loginname = N'prLinkUser')
++CREATE LOGIN [prLinkUser] WITH PASSWORD = 'p@ssw0rd'
++GO
++CREATE USER [prLinkUser] FOR LOGIN [prLinkUser] WITH DEFAULT_SCHEMA=[Mes]
++GO
+diff --git a/Stored Procedures/Mes.usp_GetItemAttributes.sql b/Stored Procedures/Mes.usp_GetItemAttributes.sql
+index 14f37c6..880b21f 100644
+--- a/Stored Procedures/Mes.usp_GetItemAttributes.sql
++++ b/Stored Procedures/Mes.usp_GetItemAttributes.sql
+@@ -10,8 +10,8 @@
+ -- Author:      Bryan Eddy
+ -- Create date: 4/23/2018
+ -- Description: Procedure to get the designated attributes values for information in Mes.MachineAttributes
+--- Version:		2
+--- Update:		Added insert query to get mapped/desired AttributeNameID's fromt the setup data
++-- Version:		3
++-- Update:		Added print attribute
+ -- =============================================
+ 
+ CREATE PROCEDURE [Mes].[usp_GetItemAttributes]
+@@ -47,6 +47,12 @@
+ 			SELECT  CAST(FiberCount AS NVARCHAR(50)) AS AttrbiuteValue, AttributeName, AttributeNameID, i.DataType, ItemNumber
+ 			FROM Setup.ItemAttributes CROSS APPLY Setup.ApsSetupAttributes k INNER JOIN Setup.AttributeDataType i ON i.DataTypeID = k.DataTypeID
+ 			WHERE AttributeNameID = 7
++
++			UNION
++
++			SELECT  CAST(Printed AS NVARCHAR(50)) AS AttrbiuteValue, AttributeName, AttributeNameID, i.DataType, ItemNumber
++			FROM Setup.ItemAttributes CROSS APPLY Setup.ApsSetupAttributes k INNER JOIN Setup.AttributeDataType i ON i.DataTypeID = k.DataTypeID
++			WHERE AttributeNameID = 37
+ 		)
+ 		INSERT INTO Mes.ItemSetupAttributes([Setup],MachineID,AttributeNameID,Item_Number, AttributeValue)
+ 		SELECT DISTINCT P.Setup, M.MachineID, K.AttributeNameID, I.item_number, K.AttrbiuteValue
+@@ -99,3 +105,5 @@
+ 
+ 
+ GO
++GRANT EXECUTE ON  [Mes].[usp_GetItemAttributes] TO [prLinkUser]
++GO
+diff --git a/Stored Procedures/Scheduling.usp_EmailAlertMissingMaterialDemand.sql b/Stored Procedures/Scheduling.usp_EmailAlertMissingMaterialDemand.sql
+index 1dcfa6e..6442462 100644
+--- a/Stored Procedures/Scheduling.usp_EmailAlertMissingMaterialDemand.sql
++++ b/Stored Procedures/Scheduling.usp_EmailAlertMissingMaterialDemand.sql
+@@ -2,6 +2,7 @@
+ GO
+ SET ANSI_NULLS ON
+ GO
++
+ /*
+ Author:		Bryan Eddy
+ Date:		5/25/2018
+@@ -13,7 +14,7 @@
+ CREATE PROCEDURE [Scheduling].[usp_EmailAlertMissingMaterialDemand]
+ AS
+ BEGIN
+-	DECLARE @html nvarchar(MAX),
++	DECLARE @html NVARCHAR(MAX),
+ 	@SubjectLine NVARCHAR(1000),
+ 	@ReceipientList NVARCHAR(1000),
+ 	@RowCount INT,
+@@ -48,8 +49,7 @@
+ 
+ 			EXEC msdb.dbo.sp_send_dbmail 
+ 			@recipients=@ReceipientList,
+-			--@recipients = 'bryan.eddy@aflglobal.com',
+-			@blind_copy_recipients = 'bryan.eddy@aflglobal.com',
++			--@blind_copy_recipients = 'bryan.eddy@aflglobal.com',
+ 			@subject = @SubjectLine,
+ 			@body = @html,
+ 			@body_format = 'HTML',
+diff --git a/Stored Procedures/Scheduling.usp_EmailAlertMissingMaterialDemandDj.sql b/Stored Procedures/Scheduling.usp_EmailAlertMissingMaterialDemandDj.sql
+index 65983d8..ca49177 100644
+--- a/Stored Procedures/Scheduling.usp_EmailAlertMissingMaterialDemandDj.sql
++++ b/Stored Procedures/Scheduling.usp_EmailAlertMissingMaterialDemandDj.sql
+@@ -2,6 +2,8 @@
+ GO
+ SET ANSI_NULLS ON
+ GO
++
++
+ /*
+ Author:		Bryan Eddy
+ Date:		5/25/2018
+@@ -13,7 +15,7 @@
+ CREATE PROCEDURE [Scheduling].[usp_EmailAlertMissingMaterialDemandDj]
+ AS
+ BEGIN
+-	DECLARE @html nvarchar(MAX),
++	DECLARE @html NVARCHAR(MAX),
+ 	@SubjectLine NVARCHAR(1000),
+ 	@ReceipientList NVARCHAR(1000),
+ 	@RowCount INT,
+@@ -48,8 +50,7 @@
+ 
+ 			EXEC msdb.dbo.sp_send_dbmail 
+ 			@recipients=@ReceipientList,
+-			--@recipients = 'bryan.eddy@aflglobal.com',
+-			@blind_copy_recipients = 'bryan.eddy@aflglobal.com',
++			--@blind_copy_recipients = 'bryan.eddy@aflglobal.com',
+ 			@subject = @SubjectLine,
+ 			@body = @html,
+ 			@body_format = 'HTML',
+diff --git a/Stored Procedures/Scheduling.usp_EmailMfgHoldAlert.sql b/Stored Procedures/Scheduling.usp_EmailMfgHoldAlert.sql
+index 3ee8936..04adb96 100644
+--- a/Stored Procedures/Scheduling.usp_EmailMfgHoldAlert.sql
++++ b/Stored Procedures/Scheduling.usp_EmailMfgHoldAlert.sql
+@@ -2,6 +2,8 @@
+ GO
+ SET ANSI_NULLS ON
+ GO
++
++
+ /*
+ Author:		Bryan Eddy
+ Date:		5/16/2018
+@@ -14,7 +16,7 @@
+ CREATE PROCEDURE [Scheduling].[usp_EmailMfgHoldAlert]
+ AS
+ BEGIN
+-	DECLARE @html nvarchar(MAX),
++	DECLARE @html NVARCHAR(MAX),
+ 	@SubjectLine NVARCHAR(1000),
+ 	@ReceipientList NVARCHAR(1000),
+ 	@qry NVARCHAR(MAX)
+@@ -41,9 +43,7 @@
+ 
+ 						EXEC msdb.dbo.sp_send_dbmail 
+ 						@recipients=@ReceipientList,
+-						--@recipients = 'bryan.eddy@aflglobal.com',
+-						--@blind_copy_recipients =  @BlindRecipientlist, --@ReceipientList
+-						@blind_copy_recipients = 'bryan.eddy@aflglobal.com',
++						--@blind_copy_recipients = 'bryan.eddy@aflglobal.com',
+ 						@subject = @SubjectLine,
+ 						@body = @html,
+ 						@body_format = 'HTML',
+diff --git a/Stored Procedures/Scheduling.usp_EmailOrdersStaleMaterials.sql b/Stored Procedures/Scheduling.usp_EmailOrdersStaleMaterials.sql
+index eb01c17..7a320f6 100644
+--- a/Stored Procedures/Scheduling.usp_EmailOrdersStaleMaterials.sql
++++ b/Stored Procedures/Scheduling.usp_EmailOrdersStaleMaterials.sql
+@@ -3,6 +3,7 @@
+ SET ANSI_NULLS ON
+ GO
+ 
++
+ /*
+ Author:		Bryan Eddy
+ Date:		4/4/2018
+@@ -61,9 +62,8 @@
+ 			SET @html = @body1 + @html
+ 
+ 			EXEC msdb.dbo.sp_send_dbmail 
+-			--@recipients=@ReceipientList,
+-			@recipients = 'bryan.eddy@aflglobal.com',
+-			@blind_copy_recipients = 'bryan.eddy@aflglobal.com',
++			@recipients=@ReceipientList,
++			--@blind_copy_recipients = 'bryan.eddy@aflglobal.com',
+ 			@subject = @SubjectLine,
+ 			@body = @html,
+ 			@body_format = 'HTML',
+diff --git a/Stored Procedures/Scheduling.usp_EmailSchedulePublishNotification.sql b/Stored Procedures/Scheduling.usp_EmailSchedulePublishNotification.sql
+index 636a38d..9d29476 100644
+--- a/Stored Procedures/Scheduling.usp_EmailSchedulePublishNotification.sql
++++ b/Stored Procedures/Scheduling.usp_EmailSchedulePublishNotification.sql
+@@ -5,6 +5,7 @@
+ 
+ 
+ 
++
+ -- =============================================
+ -- Author:		Bryan Eddy
+ -- ALTER date:  3/21/2018
+@@ -26,7 +27,7 @@
+ 
+ SET @ReceipientList = 'SPBCableACSSchedulePublishNotification@aflglobal.com'
+ 
+-SET @BlindRecipientlist = ';Bryan.Eddy@aflglobal.com';
++--SET @BlindRecipientlist = ';Bryan.Eddy@aflglobal.com';
+ 
+ 
+ DECLARE @body1 VARCHAR(MAX)
+@@ -45,7 +46,7 @@
+ 
+ 			EXEC msdb.dbo.sp_send_dbmail 
+ 			@recipients=@ReceipientList,
+-			@blind_copy_recipients =  @BlindRecipientlist, --@ReceipientList
++			--@blind_copy_recipients =  @BlindRecipientlist, --@ReceipientList
+ 			@subject = @subject,
+ 			@body = @tableHTML,
+ 			@body_format = 'HTML';
+diff --git a/Stored Procedures/Scheduling.usp_EmailSchedulerMachineCapabilityIssue.sql b/Stored Procedures/Scheduling.usp_EmailSchedulerMachineCapabilityIssue.sql
+index c8f3dc9..c94990c 100644
+--- a/Stored Procedures/Scheduling.usp_EmailSchedulerMachineCapabilityIssue.sql
++++ b/Stored Procedures/Scheduling.usp_EmailSchedulerMachineCapabilityIssue.sql
+@@ -6,6 +6,7 @@
+ 
+ 
+ 
++
+ -- =============================================
+ -- Author:		Bryan Edy
+ -- Create date: 10/31/2017
+@@ -83,7 +84,7 @@
+ 					EXEC msdb.dbo.sp_send_dbmail 
+ 					@recipients='Jeff.Gilfillan@aflglobal.com; Rich.DiDonato@aflglobal.com',
+ 					--@recipients='Bryan.Eddy@aflglobal.com',
+-					@blind_copy_recipients = 'Bryan.Eddy@aflglobal.com',
++					--@blind_copy_recipients = 'Bryan.Eddy@aflglobal.com',
+ 					@subject = @subject,
+ 					@body = @tableHTML,
+ 					@body_format = 'HTML';
+diff --git a/Stored Procedures/Scheduling.usp_EmailSchedulingMissingLineSpeed.sql b/Stored Procedures/Scheduling.usp_EmailSchedulingMissingLineSpeed.sql
+index 161d62b..0b85532 100644
+--- a/Stored Procedures/Scheduling.usp_EmailSchedulingMissingLineSpeed.sql
++++ b/Stored Procedures/Scheduling.usp_EmailSchedulingMissingLineSpeed.sql
+@@ -3,14 +3,12 @@
+ SET ANSI_NULLS ON
+ GO
+ 
+-
+-
+ -- =============================================
+ -- Author:		Bryan Eddy
+ -- ALTER date: 6/12/17
+ -- Description:	Send email of missing line speeds to Process Engineers
+--- Version:		10
+--- Update:		Added logic to produce only a single missing setup for each record
++-- Version:		11
++-- Update:		Removed R093 from the exclusion criteria
+ -- =============================================
+ CREATE PROC [Scheduling].[usp_EmailSchedulingMissingLineSpeed]
+ 
+@@ -86,7 +84,7 @@
+ 	INNER JOIN #SetupLocation K ON g.item_number = K.Item
+ 	INNER JOIN dbo.Oracle_Items B ON B.item_number = K.ITEM 
+ 	WHERE B.Make_Buy = 'MAKE'  and left(ITEM,3) NOT in ('WTC','DNT')
+-	and LEFT(setup,1) not in ('O','I') and setup not in ('R696','R093','PQC','pk01','SK01') AND setup NOT LIKE 'm00[4-9]'
++	and LEFT(setup,1) not in ('O','I') and setup not in ('R696','PQC','pk01','SK01') AND setup NOT LIKE 'm00[4-9]'
+ 	AND K.department_code NOT LIKE '%INSPEC%'
+ 	) 
+ 	,cteConsolidatedMissingSetupOrders
+@@ -134,21 +132,17 @@
+ --FROM #FinalResults
+ 
+ DECLARE @numRows int
+-DECLARE @Receipientlist varchar(1000)
+ DECLARE @BlindRecipientlist varchar(1000)
++DECLARE @Receipientlist varchar(1000)
+ 
+ SELECT @numRows = count(*) FROM #Results;
+ 
+-
+ SET @ReceipientList = (STUFF((SELECT ';' + UserEmail 
+ 						FROM [NAASPB-PRD04\SQL2014].premise.dbo.tblConfiguratorUser G  INNER JOIN [NAASPB-PRD04\SQL2014].premise.users.UserResponsibility  K ON  G.UserID = K.UserID
+-  						WHERE K.ResponsibilityID = 1 FOR XML PATH('')),1,1,''))
++	  					WHERE K.ResponsibilityID IN (4,16,1) FOR XML PATH('')),1,1,''))
+ 
+-SET @ReceipientList = @ReceipientList +';'+ (STUFF((SELECT ';' + UserEmail 
+-						FROM [NAASPB-PRD04\SQL2014].premise.dbo.tblConfiguratorUser G  INNER JOIN [NAASPB-PRD04\SQL2014].Premise.users.UserResponsibility  K ON  G.UserID = K.UserID
+-  						WHERE K.ResponsibilityID = 4 FOR XML PATH('')),1,1,''))
+ 
+-SET @BlindRecipientlist = 'Bryan.Eddy@aflglobal.com';
++--SET @BlindRecipientlist = 'Bryan.Eddy@aflglobal.com';
+ 
+ 
+ DECLARE @body1 VARCHAR(MAX)
+@@ -194,7 +188,7 @@
+ 			EXEC msdb.dbo.sp_send_dbmail 
+ 			@recipients=@ReceipientList,
+ 			--@recipients = 'bryan.eddy@aflglobal.com;',
+-			@blind_copy_recipients =  @BlindRecipientlist, --@ReceipientList
++			--@blind_copy_recipients =  @BlindRecipientlist, --@ReceipientList
+ 			@subject = @subject,
+ 			@body = @tableHTML,
+ 			@body_format = 'HTML';
+diff --git a/Stored Procedures/Setup.usp_CalculateSetupTimesFromOracle.sql b/Stored Procedures/Setup.usp_CalculateSetupTimesFromOracle.sql
+index e259271..948e796 100644
+--- a/Stored Procedures/Setup.usp_CalculateSetupTimesFromOracle.sql
++++ b/Stored Procedures/Setup.usp_CalculateSetupTimesFromOracle.sql
+@@ -8,6 +8,7 @@
+ 
+ 
+ 
++
+ -- =============================================
+ -- Author:      Bryan Eddy
+ -- Create date: 8/14/2017
+@@ -385,10 +386,43 @@
+ 		THROW;
+ 	END CATCH;
+ 
++
++	
++	--Catch all.  Inserts a value of 0 for any attributes without a value
++	BEGIN TRY
++		BEGIN TRAN
++		;WITH cteSetupTimesCalculated
++		AS(
++			SELECT Setup, AttributeNameID, MachineID
++			FROM            Setup.vSetupTimesItem 
++		),
++		cteMachineGroupAttributes
++		AS(
++		SELECT DISTINCT i.*, S.Setup, AttributeName, g.AttributeNameID, g.PassToAps, g.ValueTypeID, S.Item
++		FROM                    setup.MachineGroupAttributes g INNER JOIN
++								 Setup.MachineNames AS I ON I.MachineGroupID = G.MachineGroupID
++								INNER JOIN Setup.vSetupLineSpeed S ON S.MachineID = I.MachineID
++								INNER JOIN Setup.ApsSetupAttributes P ON P.AttributeNameID = g.AttributeNameID
++
++		)
++		INSERT INTO setup.AttributeSetupTimeItem (Item_Number,[Setup],[MachineGroupID],MachineID,AttributeNameID,[SetupAttributeValue],[SetupTime])
++		SELECT DISTINCT G.Item,G.Setup,G.MachineGroupID,G.MachineID, g.AttributeNameID, 0, 0
++		FROM cteMachineGroupAttributes G LEFT JOIN  cteSetupTimesCalculated I ON I.Setup = G.Setup AND I.MachineID = G.MachineID  AND      I.AttributeNameID = G.AttributeNameID             
++		WHERE  i.setup IS NULL AND G.PassToAps = 1
++	COMMIT TRAN
++	END TRY
++	BEGIN CATCH
++		ROLLBACK TRANSACTION;
++		IF @@TRANCOUNT > 0
++
++		PRINT 'Actual error number: ' + CAST(@ErrorNumber AS VARCHAR(10));
++		PRINT 'Actual line number: ' + CAST(@ErrorLine AS VARCHAR(10));
++ 
++		THROW;
++	END CATCH;
++
++
+ END
+-
+-
+-
+ 
+ 
+ 
+diff --git a/Stored Procedures/Setup.usp_CreateBufferingMatrix.sql b/Stored Procedures/Setup.usp_CreateBufferingMatrix.sql
+index e4972e5..f76e049 100644
+--- a/Stored Procedures/Setup.usp_CreateBufferingMatrix.sql
++++ b/Stored Procedures/Setup.usp_CreateBufferingMatrix.sql
+@@ -2,15 +2,6 @@
+ GO
+ SET ANSI_NULLS ON
+ GO
+-
+-
+-
+-
+-
+-
+-
+-
+-
+ -- =============================================
+ -- Author:      Bryan Eddy
+ -- Create date: 8/22/2017
+@@ -18,7 +9,7 @@
+ -- Version: 1
+ -- Update:	Added error handling
+ -- =============================================
+-CREATE PROCEDURE [Setup].[usp_CreateBufferingMatrix]
++CREATE PROC [Setup].[usp_CreateBufferingMatrix]
+ AS
+ BEGIN
+ 
+@@ -29,7 +20,7 @@
+ 				;WITH
+ 				cteBufferingJacket
+ 				AS(
+-					SELECT DISTINCT I.MachineName,g.item_number AS FromAttribute, k.item_number AS ToAttribute, 5 AS AttributeNameID, 
++					SELECT DISTINCT I.MachineName,g.item_number AS FromAttribute, k.item_number AS ToAttribute, 5 AS AttributeNameID, I.MachineID,
+ 					CASE WHEN G.attribute_value = k.attribute_value THEN 0
+ 						WHEN G.attribute_value = 'PBT' AND k.attribute_value IN('HDPE','LSZH','MDPE') THEN 30
+ 						WHEN G.attribute_value = 'MDPE' AND k.attribute_value IN('HDPE','LSZH','PBT','POLYURETHANE','SANTOPRENE') THEN 30
+@@ -43,8 +34,8 @@
+ 					WHERE K.attribute_name = 'Jacket' AND g.attribute_name = 'Jacket'  AND MachineGroupID = 2
+ 				)
+ 				INSERT INTO Setup.AttributeMatrixFromTo(FromAttribute, ToAttribute, TimeValue, MachineID, AttributeNameID)
+-				SELECT K.FromAttribute, K.ToAttribute, K.Timevalue, G.MachineID, K.AttributeNameID
+-				FROM cteBufferingJacket K LEFT JOIN SETUP.AttributeMatrixFromTo G ON G.FromAttribute = K.FromAttribute AND G.ToAttribute = G.ToAttribute
++				SELECT K.FromAttribute, K.ToAttribute, K.Timevalue, k.MachineID, K.AttributeNameID
++				FROM cteBufferingJacket K LEFT JOIN SETUP.AttributeMatrixFromTo G ON G.FromAttribute = K.FromAttribute AND G.ToAttribute = G.ToAttribute AND G.MachineID = K.MachineID
+ 				WHERE G.FromAttribute IS NULL OR G.ToAttribute IS NULL
+ 			COMMIT TRAN
+ 	END TRY
+diff --git a/Stored Procedures/Setup.usp_CreateSheathingMatrix.sql b/Stored Procedures/Setup.usp_CreateSheathingMatrix.sql
+index 11b6be1..7a6f63c 100644
+--- a/Stored Procedures/Setup.usp_CreateSheathingMatrix.sql
++++ b/Stored Procedures/Setup.usp_CreateSheathingMatrix.sql
+@@ -8,12 +8,15 @@
+ 
+ 
+ 
++
++
++
+ -- =============================================
+ -- Author:      Bryan Eddy
+ -- Create date: 7/31/2017
+ -- Description: Create all combinations for sheathing compound To From logic
+--- Version: 1
+--- Update:	Added error handling
++-- Version: 2
++-- Update:	Updated color time value logic and added MachineID to sheathing compound logic
+ -- =============================================
+ CREATE PROCEDURE [Setup].[usp_CreateSheathingMatrix]
+ AS
+@@ -29,7 +32,8 @@
+ 			;WITH cteSheathingJacket
+ 			AS (
+ 			SELECT G.item_number AS FromAttribute, k.item_number AS ToAttribute, MachineID,5 AS AttributeNameID,
+-			CASE WHEN G.attribute_value = k.attribute_value THEN 0.33*60
++			CASE WHEN g.item_number = k.item_number THEN 0
++			WHEN G.attribute_value = k.attribute_value THEN 0.33*60
+ 				WHEN G.attribute_value = 'PVC'  THEN 1*60
+ 				WHEN G.attribute_value = 'PVDF'  THEN 3*60
+ 				WHEN G.attribute_value = 'NYLON' THEN 6*60
+@@ -41,7 +45,7 @@
+ 			)
+ 			INSERT INTO Setup.AttributeMatrixFromTo(FromAttribute,ToAttribute,  TimeValue, MachineID,AttributeNameID)
+ 			SELECT K.FromAttribute,K.ToAttribute,K.Timevalue,K.MachineID, K.AttributeNameID
+-			FROM cteSheathingJacket K LEFT JOIN SETUP.AttributeMatrixFromTo G ON K.FromAttribute = G.FromAttribute AND K.ToAttribute = G.ToAttribute
++			FROM cteSheathingJacket K LEFT JOIN SETUP.AttributeMatrixFromTo G ON K.FromAttribute = G.FromAttribute AND K.ToAttribute = G.ToAttribute AND G.MachineID = K.MachineID
+ 			WHERE G.FromAttribute IS NULL
+ 		COMMIT TRAN
+ 	END TRY
+@@ -62,21 +66,22 @@
+ 			;WITH cteSheathingColor
+ 			AS(
+ 				SELECT DISTINCT G.attribute_value FromAttribute, k.attribute_value ToAttribute,4 AS AttributeNameID,
+-					 CASE WHEN G.attribute_value = K.attribute_value OR K.attribute_value = G.attribute_value THEN 0.00
+-					 WHEN G.attribute_value <> 'BLACK' AND K.attribute_value <>'BLACK' THEN 20.00
+-					 WHEN G.attribute_value <> 'BLACK' THEN 20.00
+-					 WHEN G.attribute_value = 'BLACK' THEN 40.00
++					 CASE WHEN FromAtt.PreferedSequence = ToAtt.PreferedSequence THEN 0
++							WHEN FromAtt.PreferedSequence > ToAtt.PreferedSequence THEN 60
++							WHEN fromAtt.PreferedSequence < ToAtt.PreferedSequence THEN 20 
+ 					 ELSE 99999
+-					 END AS Timevalue
++					 END AS Timevalue, T.MachineID
+ 				FROM dbo.Oracle_Item_Attributes G CROSS APPLY dbo.Oracle_Item_Attributes K
+-				WHERE G.attribute_name = 'COLOR' AND K.attribute_name = 'COLOR'
++				LEFT JOIN Setup.ColorSequencePreference ToAtt ON ToAtt.Color = K.attribute_value
++				LEFT JOIN Setup.ColorSequencePreference FromAtt ON FromAtt.Color = G.attribute_value
++				CROSS APPLY Setup.MachineNames T 
++				WHERE G.attribute_name = 'COLOR' AND K.attribute_name = 'COLOR' AND T.MachineGroupID = 8
+ 			)
+ 			INSERT INTO Setup.AttributeMatrixFromTo(FromAttribute,ToAttribute,  TimeValue, MachineID,AttributeNameID)
+-			SELECT DISTINCT K.FromAttribute,K.ToAttribute,K.Timevalue,t.MachineID,K.AttributeNameID--, k.FromAttribute, k.ToAttribute
++			SELECT DISTINCT K.FromAttribute,K.ToAttribute,K.Timevalue,K.MachineID,K.AttributeNameID--, k.FromAttribute, k.ToAttribute
+ 			FROM cteSheathingColor K
+-			CROSS APPLY SETUP.MachineNames T
+-			LEFT JOIN SETUP.AttributeMatrixFromTo G ON K.FromAttribute = G.FromAttribute AND K.ToAttribute = G.ToAttribute
+-			WHERE  T.MachineGroupID = 8 AND (G.FromAttribute IS NULL OR g.ToAttribute IS NULL)
++			LEFT JOIN SETUP.AttributeMatrixFromTo G ON K.FromAttribute = G.FromAttribute AND K.ToAttribute = G.ToAttribute AND g.MachineID = K.MachineID
++			WHERE   G.FromAttribute IS NULL 
+ 		COMMIT TRAN
+ 	END TRY
+ 	BEGIN CATCH
+diff --git a/Stored Procedures/Setup.usp_EmailMissingDjSetup.sql b/Stored Procedures/Setup.usp_EmailMissingDjSetup.sql
+index 561e821..ec7726f 100644
+--- a/Stored Procedures/Setup.usp_EmailMissingDjSetup.sql
++++ b/Stored Procedures/Setup.usp_EmailMissingDjSetup.sql
+@@ -6,6 +6,8 @@
+ 
+ 
+ 
++
++
+ /*
+ Author:		Bryan Eddy
+ Date:		2/2/2018
+@@ -81,7 +83,7 @@
+   							WHERE K.ResponsibilityID = 4 FOR XML PATH('')),1,1,''))
+ 
+ 
+-	SET @BlindRecipientlist = @BlindRecipientlist + ';Bryan.Eddy@aflglobal.com';
++	--SET @BlindRecipientlist = @BlindRecipientlist + ';Bryan.Eddy@aflglobal.com';
+ 
+ 
+ 	DECLARE @body1 VARCHAR(MAX)
+@@ -121,9 +123,7 @@
+ 		
+ 					EXEC msdb.dbo.sp_send_dbmail 
+ 					@recipients=@ReceipientList,
+-					--@recipients = 'bryan.eddy@aflglobal.com',
+-					--@blind_copy_recipients =  @BlindRecipientlist, --@ReceipientList
+-					@blind_copy_recipients = 'bryan.eddy@aflglobal.com',
++					--@blind_copy_recipients = 'bryan.eddy@aflglobal.com',
+ 					@subject = @subject,
+ 					@body = @tableHTML,
+ 					@body_format = 'HTML';
+diff --git a/Stored Procedures/dbo.usp_EmailOracleTableRecordCount.sql b/Stored Procedures/dbo.usp_EmailOracleTableRecordCount.sql
+index 8962d98..94775ee 100644
+--- a/Stored Procedures/dbo.usp_EmailOracleTableRecordCount.sql
++++ b/Stored Procedures/dbo.usp_EmailOracleTableRecordCount.sql
+@@ -2,6 +2,7 @@
+ GO
+ SET ANSI_NULLS ON
+ GO
++
+ /*
+ Author:			Bryan Eddy
+ Date:			4/16/2017
+@@ -37,7 +38,7 @@
+ 
+ EXEC(@sql)
+ 
+-DECLARE @Receipientlist varchar(1000)
++DECLARE @Receipientlist VARCHAR(1000)
+ 
+ SET @Receipientlist = (STUFF((SELECT ';' + UserEmail 
+ 						FROM [NAASPB-PRD04\SQL2014].premise.dbo.tblConfiguratorUser G  INNER JOIN [NAASPB-PRD04\SQL2014].premise.users.UserResponsibility  K ON  G.UserID = K.UserID
+@@ -46,7 +47,7 @@
+ 			
+ 
+ 
+-	DECLARE @html nvarchar(MAX),
++	DECLARE @html NVARCHAR(MAX),
+ @SubjectLine NVARCHAR(1000)
+ 
+ 	SET @SubjectLine = 'Oracle Table Record Count ' + CAST(GETDATE() AS NVARCHAR(50))
+@@ -56,8 +57,7 @@
+ 
+ 					EXEC msdb.dbo.sp_send_dbmail 
+ 					@recipients=@Receipientlist ,
+-					--@recipients='Bryan.Eddy@aflglobal.com;',
+-					@blind_copy_recipients = 'bryan.eddy@aflglobal.com',
++					--@blind_copy_recipients = 'bryan.eddy@aflglobal.com',
+ 					@subject = @SubjectLine,
+ 					@body = @html,
+ 					@body_format = 'HTML',
+diff --git a/Tables/Setup.AttributeMatrixFromTo.sql b/Tables/Setup.AttributeMatrixFromTo.sql
+index ffba137..d82a574 100644
+--- a/Tables/Setup.AttributeMatrixFromTo.sql
++++ b/Tables/Setup.AttributeMatrixFromTo.sql
+@@ -7,11 +7,42 @@
+ [TimeValue] [float] NOT NULL,
+ [CreatedBy] [nvarchar] (50) COLLATE SQL_Latin1_General_CP1_CI_AS NULL CONSTRAINT [DF__FromToAtt__Creat__3335971A] DEFAULT (suser_sname()),
+ [DateCreated] [datetime] NULL CONSTRAINT [DF__FromToAtt__DateC__3429BB53] DEFAULT (getdate()),
+-[cost] [decimal] (8, 6) NULL
++[cost] [decimal] (8, 6) NULL,
++[RevisedBy] [nvarchar] (50) COLLATE SQL_Latin1_General_CP1_CI_AS NULL CONSTRAINT [DF_AttributeMatrixFromTo_UpdatedBy] DEFAULT (suser_sname()),
++[DateRevised] [datetime] NULL CONSTRAINT [DF_AttributeMatrixFromTo_DateRevised] DEFAULT (getdate()),
++[GUIID] [uniqueidentifier] NULL CONSTRAINT [DF__Attribute__GUIID__412F7C0D] DEFAULT (newid())
+ ) ON [PRIMARY]
+ GO
++SET QUOTED_IDENTIFIER ON
++GO
++SET ANSI_NULLS ON
++GO
++-- =============================================
++-- Author:		Bryan Eddy
++-- Create date: 7/2/2018
++-- Description:	Trigger to update revision fields
++-- =============================================
++CREATE TRIGGER [Setup].[FromToMatrix_Trgr] 
++   ON  [Setup].[AttributeMatrixFromTo] 
++   AFTER INSERT,DELETE,UPDATE
++AS 
++BEGIN
++	-- SET NOCOUNT ON added to prevent extra result sets from
++	-- interfering with SELECT statements.
++	SET NOCOUNT ON;
++	IF NOT (UPDATE(RevisedBy) OR UPDATE(DateRevised))
++		BEGIN
++			UPDATE T
++			SET RevisedBy = SUSER_SNAME(), DateRevised = GETDATE()
++			FROM Setup.AttributeMatrixFromTo T INNER JOIN Inserted I ON I.GUIID = T.GUIID
++		END
++
++END
++GO
+ ALTER TABLE [Setup].[AttributeMatrixFromTo] ADD CONSTRAINT [PK_FromToAttributeMatrix] PRIMARY KEY CLUSTERED  ([AttributeNameID], [MachineID], [FromAttribute], [ToAttribute]) ON [PRIMARY]
+ GO
++CREATE UNIQUE NONCLUSTERED INDEX [IX_AttributeMatrixFromTo] ON [Setup].[AttributeMatrixFromTo] ([GUIID]) ON [PRIMARY]
++GO
+ ALTER TABLE [Setup].[AttributeMatrixFromTo] ADD CONSTRAINT [FK_FromToAttributeMatrix_ApsSetupAttributes] FOREIGN KEY ([AttributeNameID]) REFERENCES [Setup].[ApsSetupAttributes] ([AttributeNameID]) ON DELETE CASCADE ON UPDATE CASCADE
+ GO
+ ALTER TABLE [Setup].[AttributeMatrixFromTo] ADD CONSTRAINT [FK_FromToAttributeMatrix_MachineNames] FOREIGN KEY ([MachineID]) REFERENCES [Setup].[MachineNames] ([MachineID]) ON DELETE CASCADE ON UPDATE CASCADE
+diff --git a/Tables/dbo._mst_push.sql b/Tables/dbo._mst_push.sql
+index 29c108b..d48219d 100644
+--- a/Tables/dbo._mst_push.sql
++++ b/Tables/dbo._mst_push.sql
+@@ -6,6 +6,7 @@
+ [order_number] [bigint] NULL,
+ [line_number] [bigint] NULL,
+ [conc_order_number] [varchar] (50) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
++[bom_route_alt] [varchar] (50) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+ [component_item] [varchar] (50) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+ [assembly_item] [varchar] (50) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+ [operation_seq_num] [float] NULL,
+@@ -32,5 +33,5 @@
+ [scheduled] [varchar] (7) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+ [locked] [varchar] (1) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+ [machine_override] [varchar] (1) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL
+-) ON [PRIMARY]
++) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+ GO
+diff --git a/Tables/dbo._report_4a_production_master_schedule.sql b/Tables/dbo._report_4a_production_master_schedule.sql
+index a17c336..a8eee5d 100644
+--- a/Tables/dbo._report_4a_production_master_schedule.sql
++++ b/Tables/dbo._report_4a_production_master_schedule.sql
+@@ -29,6 +29,8 @@
+ [scheduled_total_hours] [float] NULL,
+ [late_order] [varchar] (1) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
+ [remake] [varchar] (1) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
++[fiberset] [varchar] (max) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
++[stage] [varchar] (max) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+ [last_update_date] [datetime] NOT NULL
+-) ON [PRIMARY]
++) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+ GO
+diff --git a/Tables/dbo._report_9b_capacity.sql b/Tables/dbo._report_9b_capacity.sql
+index 00664dd..be9f551 100644
+--- a/Tables/dbo._report_9b_capacity.sql
++++ b/Tables/dbo._report_9b_capacity.sql
+@@ -2,10 +2,18 @@
+ (
+ [day] [date] NOT NULL,
+ [machine] [varchar] (max) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
++[machine_capacity_type] [varchar] (max) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
++[department] [varchar] (max) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
++[plant] [varchar] (max) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+ [hours_available] [float] NOT NULL,
+ [hours_utilized] [numeric] (38, 6) NOT NULL,
++[hours_utilized_bottlenecked] [numeric] (38, 6) NOT NULL,
++[hours_utilized_late] [numeric] (38, 6) NOT NULL,
+ [percent_utilized] [float] NULL,
++[percent_utilized_bottlenecked] [float] NULL,
++[percent_utilized_late] [float] NULL,
+ [qty] [float] NOT NULL,
+-[last_update_date] [datetime] NOT NULL
+-) ON [PRIMARY]
++[last_update_date] [datetime] NOT NULL,
++[planning_horizon_end_date] [datetime] NULL
++) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+ GO
+diff --git a/Tables/dbo._report_9d_fiberset_lengths.sql b/Tables/dbo._report_9d_fiberset_lengths.sql
+new file mode 100644
+index 0000000..e05d81e
+--- /dev/null
++++ b/Tables/dbo._report_9d_fiberset_lengths.sql
+@@ -0,0 +1,12 @@
++CREATE TABLE [dbo].[_report_9d_fiberset_lengths]
++(
++[FiberSet UDF] [varchar] (max) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
++[job] [varchar] (max) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
++[Product] [varchar] (max) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
++[job_qty] [float] NULL,
++[fiber_set_qty] [float] NULL,
++[fiber_set_qty_max] [varchar] (150) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
++[percent_of_max] [float] NULL,
++[last_update_date] [datetime] NOT NULL
++) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
++GO
+diff --git a/Views/Scheduling.vProductionSchedule.sql b/Views/Scheduling.vProductionSchedule.sql
+index 2e715aa..6f7e858 100644
+--- a/Views/Scheduling.vProductionSchedule.sql
++++ b/Views/Scheduling.vProductionSchedule.sql
+@@ -6,8 +6,8 @@
+ Author:		Bryan Eddy
+ Date:		3/14/2018
+ Desc:		View for SSRS reporting
+-Version:	1
+-Update:		n/a
++Version:	2
++Update:		Add stage and fiberset to the view
+ Note:		OD first uses OD from Setup information else it uses OD from item.  Item OD and setup OD are not the same.  
+ 			This will not be accurate for all items, just tubes, and sheathing.  Not cabling.
+ 			Color does not apply to sheathing
+@@ -45,7 +45,7 @@
+        R.late_order,
+        R.remake,
+        R.last_update_date, m.Plant, M.Department, M.DepartmentID, COALESCE(I.NominalOD, A.NominalOD) AS NominalOD
+-, I.NumberCorePositions, i.UJCM UpJacketCM, I.JacketMaterial, I.EndsOfAramid
++, I.NumberCorePositions, i.UJCM UpJacketCM, I.JacketMaterial, I.EndsOfAramid,r.fiberset, r.stage
+ , CASE WHEN R.promise_date < GETDATE() THEN ROUND(CAST(DATEDIFF(MINUTE,R.promise_date, R.planned_setup_start) AS FLOAT)/60/24,3) END AS PromiseLatenessDays 
+ , A.FiberCount, CASE WHEN M.DepartmentID = 5 AND A.Printed = 1 THEN A.CableColor + ' ----' ELSE A.CableColor END AS CableColor, A.Printed
+ FROM Setup.vMachineNames M RIGHT JOIN dbo._report_4a_production_master_schedule R ON r.current_op_machine = m.MachineName
+diff --git a/Views/Setup.vInterfaceSetupAttributes.sql b/Views/Setup.vInterfaceSetupAttributes.sql
+index 5bf3525..c551f4e 100644
+--- a/Views/Setup.vInterfaceSetupAttributes.sql
++++ b/Views/Setup.vInterfaceSetupAttributes.sql
+@@ -2,21 +2,6 @@
+ GO
+ SET ANSI_NULLS ON
+ GO
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+ /*Interface view of needed information from the Recipe Management Syste / PSS DB*/
+ CREATE VIEW [Setup].[vInterfaceSetupAttributes]
+ AS
+@@ -26,7 +11,7 @@
+                          Setup.tblSetupAttributes.EffectiveDate, Setup.tblAttributes.AttrEffectiveDate, Setup.tblAttributes.AttributeGroupID, Setup.tblSetup.IneffectiveDate, 
+                          Setup.tblAttributes.AttributeUOM, Setup.tblAttributes.AttrIneffectiveDate AS AttributeIneffectiveDate, 
+                          Setup.tblSetupAttributes.IneffectiveDate AS SetupAttributesIneffectiveDate, Setup.tblProcessMachines.MachineNumber, tblProcessMachines.MachineID AS PssMachineID
+-						 ,tblProcessMachines.ProcessID AS PssProcessID, AttributeViewOrder, AttributeDataType,SigDigits
++						 ,tblProcessMachines.ProcessID AS PssProcessID, AttributeViewOrder, AttributeDataType,SigDigits, DefaultMinTol, DefaultMaxTol
+ FROM            Setup.tblAttributes INNER JOIN
+                          Setup.tblSetupAttributes ON Setup.tblAttributes.AttributeID = Setup.tblSetupAttributes.AttributeID INNER JOIN
+                          Setup.tblSetup ON Setup.tblSetupAttributes.SetupID = Setup.tblSetup.SetupID AND Setup.tblSetupAttributes.MachineID = Setup.tblSetup.MachineID INNER JOIN

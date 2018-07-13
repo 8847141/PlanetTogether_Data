@@ -3,6 +3,7 @@ GO
 SET ANSI_NULLS ON
 GO
 
+
 /*
 Author:		Bryan Eddy
 Date:		4/4/2018
@@ -61,9 +62,8 @@ SET @html =  @html + '<H1>Stale Materials Report Grouped By Material/Buyer</H1><
 			SET @html = @body1 + @html
 
 			EXEC msdb.dbo.sp_send_dbmail 
-			--@recipients=@ReceipientList,
-			@recipients = 'bryan.eddy@aflglobal.com',
-			@blind_copy_recipients = 'bryan.eddy@aflglobal.com',
+			@recipients=@ReceipientList,
+			--@blind_copy_recipients = 'bryan.eddy@aflglobal.com',
 			@subject = @SubjectLine,
 			@body = @html,
 			@body_format = 'HTML',

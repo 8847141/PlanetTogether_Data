@@ -8,12 +8,15 @@ GO
 
 
 
+
+
+
 -- =============================================
 -- Author:      Bryan Eddy
 -- Create date: 7/31/2017
 -- Description: Create all combinations for sheathing compound To From logic
--- Version: 1
--- Update:	Added error handling
+-- Version: 2
+-- Update:	Updated color time value logic and added MachineID to sheathing compound logic
 -- =============================================
 CREATE PROCEDURE [Setup].[usp_CreateSheathingMatrix]
 AS
@@ -29,7 +32,8 @@ DECLARE @ErrorLine INT = ERROR_LINE();
 			;WITH cteSheathingJacket
 			AS (
 			SELECT G.item_number AS FromAttribute, k.item_number AS ToAttribute, MachineID,5 AS AttributeNameID,
-			CASE WHEN G.attribute_value = k.attribute_value THEN 0.33*60
+			CASE WHEN g.item_number = k.item_number THEN 0
+			WHEN G.attribute_value = k.attribute_value THEN 0.33*60
 				WHEN G.attribute_value = 'PVC'  THEN 1*60
 				WHEN G.attribute_value = 'PVDF'  THEN 3*60
 				WHEN G.attribute_value = 'NYLON' THEN 6*60
@@ -41,7 +45,7 @@ DECLARE @ErrorLine INT = ERROR_LINE();
 			)
 			INSERT INTO Setup.AttributeMatrixFromTo(FromAttribute,ToAttribute,  TimeValue, MachineID,AttributeNameID)
 			SELECT K.FromAttribute,K.ToAttribute,K.Timevalue,K.MachineID, K.AttributeNameID
-			FROM cteSheathingJacket K LEFT JOIN SETUP.AttributeMatrixFromTo G ON K.FromAttribute = G.FromAttribute AND K.ToAttribute = G.ToAttribute
+			FROM cteSheathingJacket K LEFT JOIN SETUP.AttributeMatrixFromTo G ON K.FromAttribute = G.FromAttribute AND K.ToAttribute = G.ToAttribute AND G.MachineID = K.MachineID
 			WHERE G.FromAttribute IS NULL
 		COMMIT TRAN
 	END TRY
@@ -62,21 +66,22 @@ DECLARE @ErrorLine INT = ERROR_LINE();
 			;WITH cteSheathingColor
 			AS(
 				SELECT DISTINCT G.attribute_value FromAttribute, k.attribute_value ToAttribute,4 AS AttributeNameID,
-					 CASE WHEN G.attribute_value = K.attribute_value OR K.attribute_value = G.attribute_value THEN 0.00
-					 WHEN G.attribute_value <> 'BLACK' AND K.attribute_value <>'BLACK' THEN 20.00
-					 WHEN G.attribute_value <> 'BLACK' THEN 20.00
-					 WHEN G.attribute_value = 'BLACK' THEN 40.00
+					 CASE WHEN FromAtt.PreferedSequence = ToAtt.PreferedSequence THEN 0
+							WHEN FromAtt.PreferedSequence > ToAtt.PreferedSequence THEN 60
+							WHEN fromAtt.PreferedSequence < ToAtt.PreferedSequence THEN 20 
 					 ELSE 99999
-					 END AS Timevalue
+					 END AS Timevalue, T.MachineID
 				FROM dbo.Oracle_Item_Attributes G CROSS APPLY dbo.Oracle_Item_Attributes K
-				WHERE G.attribute_name = 'COLOR' AND K.attribute_name = 'COLOR'
+				LEFT JOIN Setup.ColorSequencePreference ToAtt ON ToAtt.Color = K.attribute_value
+				LEFT JOIN Setup.ColorSequencePreference FromAtt ON FromAtt.Color = G.attribute_value
+				CROSS APPLY Setup.MachineNames T 
+				WHERE G.attribute_name = 'COLOR' AND K.attribute_name = 'COLOR' AND T.MachineGroupID = 8
 			)
 			INSERT INTO Setup.AttributeMatrixFromTo(FromAttribute,ToAttribute,  TimeValue, MachineID,AttributeNameID)
-			SELECT DISTINCT K.FromAttribute,K.ToAttribute,K.Timevalue,t.MachineID,K.AttributeNameID--, k.FromAttribute, k.ToAttribute
+			SELECT DISTINCT K.FromAttribute,K.ToAttribute,K.Timevalue,K.MachineID,K.AttributeNameID--, k.FromAttribute, k.ToAttribute
 			FROM cteSheathingColor K
-			CROSS APPLY SETUP.MachineNames T
-			LEFT JOIN SETUP.AttributeMatrixFromTo G ON K.FromAttribute = G.FromAttribute AND K.ToAttribute = G.ToAttribute
-			WHERE  T.MachineGroupID = 8 AND (G.FromAttribute IS NULL OR g.ToAttribute IS NULL)
+			LEFT JOIN SETUP.AttributeMatrixFromTo G ON K.FromAttribute = G.FromAttribute AND K.ToAttribute = G.ToAttribute AND g.MachineID = K.MachineID
+			WHERE   G.FromAttribute IS NULL 
 		COMMIT TRAN
 	END TRY
 	BEGIN CATCH

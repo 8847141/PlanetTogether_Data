@@ -3,14 +3,12 @@ GO
 SET ANSI_NULLS ON
 GO
 
-
-
 -- =============================================
 -- Author:		Bryan Eddy
 -- ALTER date: 6/12/17
 -- Description:	Send email of missing line speeds to Process Engineers
--- Version:		10
--- Update:		Added logic to produce only a single missing setup for each record
+-- Version:		11
+-- Update:		Removed R093 from the exclusion criteria
 -- =============================================
 CREATE PROC [Scheduling].[usp_EmailSchedulingMissingLineSpeed]
 
@@ -86,7 +84,7 @@ as(
 	INNER JOIN #SetupLocation K ON g.item_number = K.Item
 	INNER JOIN dbo.Oracle_Items B ON B.item_number = K.ITEM 
 	WHERE B.Make_Buy = 'MAKE'  and left(ITEM,3) NOT in ('WTC','DNT')
-	and LEFT(setup,1) not in ('O','I') and setup not in ('R696','R093','PQC','pk01','SK01') AND setup NOT LIKE 'm00[4-9]'
+	and LEFT(setup,1) not in ('O','I') and setup not in ('R696','PQC','pk01','SK01') AND setup NOT LIKE 'm00[4-9]'
 	AND K.department_code NOT LIKE '%INSPEC%'
 	) 
 	,cteConsolidatedMissingSetupOrders
@@ -134,21 +132,17 @@ ORDER BY DaysMissing DESC
 --FROM #FinalResults
 
 DECLARE @numRows int
-DECLARE @Receipientlist varchar(1000)
 DECLARE @BlindRecipientlist varchar(1000)
+DECLARE @Receipientlist varchar(1000)
 
 SELECT @numRows = count(*) FROM #Results;
 
-
 SET @ReceipientList = (STUFF((SELECT ';' + UserEmail 
 						FROM [NAASPB-PRD04\SQL2014].premise.dbo.tblConfiguratorUser G  INNER JOIN [NAASPB-PRD04\SQL2014].premise.users.UserResponsibility  K ON  G.UserID = K.UserID
-  						WHERE K.ResponsibilityID = 1 FOR XML PATH('')),1,1,''))
+	  					WHERE K.ResponsibilityID IN (4,16,1) FOR XML PATH('')),1,1,''))
 
-SET @ReceipientList = @ReceipientList +';'+ (STUFF((SELECT ';' + UserEmail 
-						FROM [NAASPB-PRD04\SQL2014].premise.dbo.tblConfiguratorUser G  INNER JOIN [NAASPB-PRD04\SQL2014].Premise.users.UserResponsibility  K ON  G.UserID = K.UserID
-  						WHERE K.ResponsibilityID = 4 FOR XML PATH('')),1,1,''))
 
-SET @BlindRecipientlist = 'Bryan.Eddy@aflglobal.com';
+--SET @BlindRecipientlist = 'Bryan.Eddy@aflglobal.com';
 
 
 DECLARE @body1 VARCHAR(MAX)
@@ -194,7 +188,7 @@ BEGIN
 			EXEC msdb.dbo.sp_send_dbmail 
 			@recipients=@ReceipientList,
 			--@recipients = 'bryan.eddy@aflglobal.com;',
-			@blind_copy_recipients =  @BlindRecipientlist, --@ReceipientList
+			--@blind_copy_recipients =  @BlindRecipientlist, --@ReceipientList
 			@subject = @subject,
 			@body = @tableHTML,
 			@body_format = 'HTML';

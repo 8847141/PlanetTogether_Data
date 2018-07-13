@@ -6,6 +6,8 @@ GO
 
 
 
+
+
 /*
 Author:		Bryan Eddy
 Date:		2/2/2018
@@ -81,7 +83,7 @@ SET NOCOUNT ON;
   							WHERE K.ResponsibilityID = 4 FOR XML PATH('')),1,1,''))
 
 
-	SET @BlindRecipientlist = @BlindRecipientlist + ';Bryan.Eddy@aflglobal.com';
+	--SET @BlindRecipientlist = @BlindRecipientlist + ';Bryan.Eddy@aflglobal.com';
 
 
 	DECLARE @body1 VARCHAR(MAX)
@@ -121,9 +123,7 @@ SET NOCOUNT ON;
 		
 					EXEC msdb.dbo.sp_send_dbmail 
 					@recipients=@ReceipientList,
-					--@recipients = 'bryan.eddy@aflglobal.com',
-					--@blind_copy_recipients =  @BlindRecipientlist, --@ReceipientList
-					@blind_copy_recipients = 'bryan.eddy@aflglobal.com',
+					--@blind_copy_recipients = 'bryan.eddy@aflglobal.com',
 					@subject = @subject,
 					@body = @tableHTML,
 					@body_format = 'HTML';
